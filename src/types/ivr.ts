@@ -89,7 +89,7 @@ export interface TherapyModelResult {
   extractedPhrases: string[];
   recommendedInterventions: string[];
   analyzedAt: string;
-  modelSource: 'CUSTOM_ENDPOINT' | 'BUILTIN_ADAPTER';
+  modelSource: 'CUSTOM_ENDPOINT' | 'BUILTIN_ADAPTER' | 'LOCAL_PC_CHATBOT_JOURNAL' | string;
 }
 
 export interface TherapyModelConfig {
@@ -139,6 +139,7 @@ export interface IVRPromptStep {
   step: IVRStep;
   title: string;
   promptText: Record<LanguageCode, string>;
+  romanizedPromptText?: Partial<Record<LanguageCode, string>>;
   options?: Array<{
     key: string;
     label: Record<LanguageCode, string>;
@@ -155,6 +156,9 @@ export interface IVRSessionState {
   keypadInputBuffer: string;
   currentPromptText: string;
   currentPromptAudioPlaying: boolean;
+  activeVoiceName?: string;
+  speechEngineMode?: 'NATIVE_VOICE' | 'INDIAN_PHONETIC' | 'PHONETIC_FALLBACK';
+  detectedIndicVoicesCount?: number;
   answers: {
     consentConfirmed?: boolean;
     selfReportedStatus?: SelfReportedStatus;

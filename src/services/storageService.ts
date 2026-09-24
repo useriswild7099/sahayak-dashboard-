@@ -192,6 +192,21 @@ class StorageService {
     }
   }
 
+  public reportNeed(caseId: string, need: SupportNeedType): void {
+    const c = this.cases.find((item) => item.id === caseId);
+    if (c) {
+      if (!c.unresolvedNeeds.includes(need)) {
+        c.unresolvedNeeds.push(need);
+      }
+      if (need === 'police_witness_security') {
+        c.currentUrgency = 'critical';
+      } else if (c.currentUrgency === 'low') {
+        c.currentUrgency = 'high';
+      }
+      this.saveCases();
+    }
+  }
+
   public resolveNeed(caseId: string, need: SupportNeedType): void {
     const c = this.cases.find((item) => item.id === caseId);
     if (c) {

@@ -249,6 +249,52 @@ class TherapyModelService {
   }
 
   /**
+   * Ingests a distress score and emotional indicators directly from the external
+   * local PC chatbot or journaling companion project.
+   */
+  public ingestExternalScore(
+    caseId: string,
+    distressScore: number,
+    riskTier?: 'CRITICAL' | 'ELEVATED' | 'MODERATE' | 'LOW',
+    metadata?: {
+      sourceProject?: string;
+      journalSnippet?: string;
+      detectedIndicators?: string[];
+      extractedPhrases?: string[];
+      recommendedInterventions?: string[];
+    }
+  ): TherapyModelResult | null {
+    const c = storageService.getCaseById(caseId);
+    if (!c) return null;
+
+    const computedTier: 'CRITICAL' | 'ELEVATED' | 'MODERATE' | 'LOW' =
+      riskTier ||
+      (distressScore >= 75 ? 'CRITICAL' : distressScore >= 50 ? 'ELEVATED' : distressScore >= 25 ? 'MODERATE' : 'LOW');
+
+    const result: TherapyModelResult = {
+      distressScore,
+      riskTier: computedTier,
+      confidence: 0.95,
+      detectedIndicators: metadata?.detectedIndicators || [
+        'Local PC Chatbot & Journaling Sentiment Ingestion',
+        metadata?.journalSnippet ? 'Diary Somatic Reflection' : 'Conversational Chatbot Distress Metric',
+      ],
+      extractedPhrases: metadata?.extractedPhrases || (metadata?.journalSnippet ? [metadata.journalSnippet.slice(0, 100)] : []),
+      recommendedInterventions: metadata?.recommendedInterventions || [
+        computedTier === 'CRITICAL'
+          ? 'Immediate Welfare Officer follow-up & Section 15A Witness Protection Verification'
+          : 'Continue scheduled bi-weekly check-in cadence',
+      ],
+      analyzedAt: new Date().toISOString(),
+      modelSource: metadata?.sourceProject || 'LOCAL_PC_CHATBOT_JOURNAL',
+    };
+
+    storageService.updateCaseRecord(caseId, { therapyModelResult: result });
+    this.notify();
+    return result;
+  }
+
+  /**
    * Scores an individual case using its check-in voice note transcripts and SMS thread
    */
   public async scoreCase(caseId: string): Promise<TherapyModelResult | null> {

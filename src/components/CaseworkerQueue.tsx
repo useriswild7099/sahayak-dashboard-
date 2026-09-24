@@ -3,36 +3,29 @@ import {
   AlertCircle,
   PhoneCall,
   Clock,
-  Shield,
   Search,
   CheckCircle2,
   Calendar,
   AlertTriangle,
-  Scale,
   Users,
   Eye,
   Filter,
-  MessageSquare,
   Edit3,
   CalendarPlus,
   Play,
   RotateCw,
   Cpu,
-  Sparkles,
-  Zap,
-  Activity,
   ArrowUpDown,
-  SlidersHorizontal,
-  Building2,
-  FileCheck,
-  ChevronRight,
+  Table,
+  LayoutGrid,
 } from 'lucide-react';
-import { AtrocityCase, CheckInRecord, SupportNeedType, ScheduledInteraction } from '../types/ivr';
+import { AtrocityCase, CheckInRecord, SupportNeedType } from '../types/ivr';
 import { ScheduleInteractionModal } from './ScheduleInteractionModal';
 import { EditCaseRecordModal } from './EditCaseRecordModal';
 import { ScheduledBatchRunnerModal } from './ScheduledBatchRunnerModal';
 import { ModelIntegrationModal } from './ModelIntegrationModal';
 import { therapyModelService } from '../services/therapyModelService';
+import { useLanguage } from '../context/LanguageContext';
 
 export interface DistressUrgencyConfig {
   tier: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
@@ -48,23 +41,23 @@ export interface DistressUrgencyConfig {
 
 /**
  * Returns clean, government-compliant color-coded visual indicator styling
- * from Green to Red based on distress score thresholds:
- * - 75–100: CRITICAL (Red)
- * - 55–74:  HIGH (Orange)
- * - 35–54:  MODERATE (Amber / Yellow)
- * - 0–34:   LOW (Emerald / Green)
+ * for distress score thresholds (WCAG AA compliant contrast):
+ * - 75–100: CRITICAL (Dignified Crimson)
+ * - 55–74:  HIGH (Muted Amber)
+ * - 35–54:  MODERATE (Slate Warm)
+ * - 0–34:   LOW (Forest Green)
  */
 export const getDistressUrgencyConfig = (score: number): DistressUrgencyConfig => {
   if (score >= 75) {
     return {
       tier: 'CRITICAL',
       label: 'Critical',
-      badgeClass: 'bg-red-50 text-red-800 border-red-300 ring-1 ring-red-200',
-      dotClass: 'bg-red-600 animate-pulse',
+      badgeClass: 'bg-red-50 text-red-900 border-red-300',
+      dotClass: 'bg-red-700',
       textClass: 'text-red-700',
-      cardBorderClass: 'border-red-300',
-      cardBgClass: 'bg-red-50/20',
-      barColor: 'bg-red-600',
+      cardBorderClass: 'border-l-4 border-l-red-600 border-slate-200',
+      cardBgClass: 'bg-white',
+      barColor: 'bg-red-700',
       rangeLabel: '75–100',
     };
   }
@@ -72,12 +65,12 @@ export const getDistressUrgencyConfig = (score: number): DistressUrgencyConfig =
     return {
       tier: 'HIGH',
       label: 'High',
-      badgeClass: 'bg-orange-50 text-orange-800 border-orange-300 ring-1 ring-orange-200',
-      dotClass: 'bg-orange-500',
-      textClass: 'text-orange-700',
-      cardBorderClass: 'border-orange-300',
-      cardBgClass: 'bg-orange-50/20',
-      barColor: 'bg-orange-500',
+      badgeClass: 'bg-amber-50 text-amber-900 border-amber-300',
+      dotClass: 'bg-amber-600',
+      textClass: 'text-amber-800',
+      cardBorderClass: 'border-l-4 border-l-amber-500 border-slate-200',
+      cardBgClass: 'bg-white',
+      barColor: 'bg-amber-600',
       rangeLabel: '55–74',
     };
   }
@@ -85,24 +78,24 @@ export const getDistressUrgencyConfig = (score: number): DistressUrgencyConfig =
     return {
       tier: 'MODERATE',
       label: 'Moderate',
-      badgeClass: 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-200',
-      dotClass: 'bg-amber-500',
-      textClass: 'text-amber-700',
-      cardBorderClass: 'border-amber-300',
-      cardBgClass: 'bg-amber-50/15',
-      barColor: 'bg-amber-500',
+      badgeClass: 'bg-slate-100 text-slate-800 border-slate-300',
+      dotClass: 'bg-slate-500',
+      textClass: 'text-slate-800',
+      cardBorderClass: 'border-l-4 border-l-slate-400 border-slate-200',
+      cardBgClass: 'bg-white',
+      barColor: 'bg-slate-500',
       rangeLabel: '35–54',
     };
   }
   return {
     tier: 'LOW',
     label: 'Low',
-    badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-200',
-    dotClass: 'bg-emerald-600',
-    textClass: 'text-emerald-700',
-    cardBorderClass: 'border-slate-200',
+    badgeClass: 'bg-emerald-50 text-emerald-900 border-emerald-300',
+    dotClass: 'bg-emerald-700',
+    textClass: 'text-emerald-800',
+    cardBorderClass: 'border-l-4 border-l-emerald-600 border-slate-200',
     cardBgClass: 'bg-white',
-    barColor: 'bg-emerald-600',
+    barColor: 'bg-emerald-700',
     rangeLabel: '0–34',
   };
 };
@@ -116,10 +109,12 @@ interface CaseworkerQueueProps {
 
 export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
   cases,
-  checkIns,
+  checkIns: _checkIns,
   onOpenPhoneWithCase,
   onOpenCaseDetail,
 }) => {
+  const { t, tNeed, tTier } = useLanguage();
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards');
   const [filterType, setFilterType] = useState<
     | 'all'
     | 'lapsed'
@@ -133,9 +128,9 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [districtFilter, setDistrictFilter] = useState('ALL');
   const [channelFilter, setChannelFilter] = useState('ALL');
-  const [sortBy, setSortBy] = useState<'distress_desc' | 'distress_asc' | 'urgency' | 'due_date' | 'default'>('distress_desc');
+  const [sortBy, setSortBy] = useState<'distress_desc' | 'distress_asc' | 'urgency' | 'due_date'>('distress_desc');
 
-  // Modals state
+  // Modal States
   const [caseToSchedule, setCaseToSchedule] = useState<AtrocityCase | null>(null);
   const [caseToEdit, setCaseToEdit] = useState<AtrocityCase | null>(null);
   const [showBatchRunner, setShowBatchRunner] = useState(false);
@@ -154,13 +149,12 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
     setScoringCaseId(caseId);
     try {
       await therapyModelService.scoreCase(caseId);
-      triggerToast('Beneficiary re-scored using therapy distress model.');
+      triggerToast('Beneficiary clinical distress assessment refreshed.');
     } finally {
       setScoringCaseId(null);
     }
   };
 
-  // Helper to calculate days since last contact
   const getDaysSinceLastContact = (lastContactDate: string | null) => {
     if (!lastContactDate) return 999;
     const diff = Math.floor(
@@ -175,8 +169,7 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
   );
   const urgentCases = cases.filter((c) => c.currentUrgency === 'critical' || c.currentUrgency === 'high');
   const dueTodayCases = cases.filter((c) => c.nextScheduledContact <= todayStr && c.consentStatus === 'active');
-  
-  // Model score tier counts
+
   const criticalModelCases = cases.filter((c) => (c.therapyModelResult?.distressScore ?? 0) >= 75);
   const highModelCases = cases.filter((c) => {
     const s = c.therapyModelResult?.distressScore ?? 0;
@@ -259,601 +252,527 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
   const uniqueDistricts = Array.from(new Set(cases.map((c) => c.district)));
 
   const getNeedLabel = (need: SupportNeedType) => {
-    switch (need) {
-      case 'police_witness_security':
-        return 'Police Protection / Witness Security';
-      case 'legal_aid_escort':
-        return 'Court Escort & Legal Aid';
-      case 'trauma_counselling':
-        return 'Trauma Counselling';
-      case 'compensation_disbursement':
-        return 'Sec 15A Relief Compensation';
-      case 'medical_assistance':
-        return 'Medical Care';
-      default:
-        return need;
-    }
+    return tNeed(need);
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Toast Feedback */}
       {feedbackToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-xl flex items-center gap-2 border border-emerald-600">
-          <CheckCircle2 className="w-4 h-4" />
+        <div
+          role="status"
+          className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded shadow-lg flex items-center gap-2 border border-slate-700"
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{feedbackToast}</span>
         </div>
       )}
 
-      {/* Top Government Title & Operational Summary Bar */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      {/* Institutional Header & Action Bar */}
+      <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-xs uppercase tracking-wider text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                District Welfare Cell · SC/ST Protection Division
-              </span>
-              <span className="text-slate-300">·</span>
-              <span className="text-xs text-slate-500 font-medium">Caseworker Triage Ledger</span>
+            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+              <span className="font-semibold text-slate-900">District Welfare Cell</span>
+              <span aria-hidden="true">·</span>
+              <span>Section 15A Witness Protection Triage</span>
+              <span aria-hidden="true">·</span>
+              <span className="font-mono tabular-nums text-slate-700">{cases.length} Beneficiaries Registered</span>
             </div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight mt-1 flex items-center gap-2">
-              <span>Beneficiary Continuity &amp; Welfare Follow-Up Queue</span>
-            </h2>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight mt-1">
+              {t('queueTitle')}
+            </h1>
             <p className="text-xs text-slate-600 mt-1 max-w-3xl leading-relaxed">
-              Consolidated triage portal tracking scheduled check-ins, Section 15A statutory entitlements, and
-              NLP therapy model distress scores (Green to Red) across registered atrocity cases.
+              {t('queueSubtitle')}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-            {/* Custom Model Hub Button */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {/* Model Hub Action */}
             <button
               onClick={() => setShowModelModal(true)}
-              className="px-3.5 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+              className="px-3 py-1.5 rounded bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
             >
-              <Cpu className="w-3.5 h-3.5 text-blue-700" />
-              <span>Model Config &amp; API</span>
+              <Cpu className="w-3.5 h-3.5 text-slate-600" />
+              <span>{t('modelSettingsBtn')}</span>
             </button>
 
-            {/* Run Scheduled Outreach Batch Button */}
+            {/* Scheduled Batch Runner */}
             <button
               onClick={() => setShowBatchRunner(true)}
-              className="px-3.5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+              className="px-3 py-1.5 rounded bg-[#0B2545] hover:bg-[#12335C] text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-xs"
             >
-              <Play className="w-3.5 h-3.5" />
-              <span>Run Scheduled Batch</span>
+              <Play className="w-3.5 h-3.5 text-amber-300" />
+              <span>{t('batchRunnerBtn')}</span>
             </button>
           </div>
         </div>
 
-        {/* 4 Summary Stat Metric Cards (Light Government Cards) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          {/* Card 1: Critical Distress (Score >=75) */}
+        {/* 4 Quantitative Rigor Triage Metric Counters (Clean Institutional Style) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
           <div
             onClick={() => setFilterType('model_critical')}
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+            className={`p-3.5 rounded border transition-colors cursor-pointer ${
               filterType === 'model_critical'
-                ? 'bg-red-50 border-red-400 ring-2 ring-red-200 shadow-xs'
-                : 'bg-white border-slate-200 hover:border-red-300 hover:bg-red-50/20'
+                ? 'bg-red-50/50 border-red-400'
+                : 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-red-800 flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
-                <span>Critical Distress (&ge;75)</span>
-              </span>
-              <span className="text-2xl font-bold text-red-700 font-mono">{criticalModelCases.length}</span>
+            <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+              <span className="text-red-700 font-bold uppercase tracking-wider">{t('tierCritical')} (≥75)</span>
+              <span className="w-2 h-2 rounded-full bg-red-600" />
             </div>
-            <p className="text-[11px] text-slate-600 mt-2">
-              Survivors exhibiting severe trauma, active witness threats, or acute distress.
-            </p>
+            <div className="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">
+              {criticalModelCases.length}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">High clinical distress priority</p>
           </div>
 
-          {/* Card 2: Lapsed Contact Alert */}
           <div
             onClick={() => setFilterType('lapsed')}
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+            className={`p-3.5 rounded border transition-colors cursor-pointer ${
               filterType === 'lapsed'
-                ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-200 shadow-xs'
-                : 'bg-white border-slate-200 hover:border-amber-300 hover:bg-amber-50/20'
+                ? 'bg-amber-50/50 border-amber-400'
+                : 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                <AlertCircle className="w-4 h-4 text-amber-600" />
-                <span>Lapsed Contact (&gt;14 Days)</span>
-              </span>
-              <span className="text-2xl font-bold text-amber-800 font-mono">{lapsedCases.length}</span>
+            <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+              <span className="text-amber-800 font-bold uppercase tracking-wider">{t('statLapsed')} (&gt;14d)</span>
+              <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
             </div>
-            <p className="text-[11px] text-slate-600 mt-2">
-              No recorded caseworker follow-up in over two weeks during trial or investigation.
-            </p>
+            <div className="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">
+              {lapsedCases.length}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">Mandatory follow-up overdue</p>
           </div>
 
-          {/* Card 3: Expressed Needs */}
           <div
             onClick={() => setFilterType('urgent_requests')}
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+            className={`p-3.5 rounded border transition-colors cursor-pointer ${
               filterType === 'urgent_requests'
-                ? 'bg-orange-50 border-orange-400 ring-2 ring-orange-200 shadow-xs'
-                : 'bg-white border-slate-200 hover:border-orange-300 hover:bg-orange-50/20'
+                ? 'bg-amber-50/50 border-amber-400'
+                : 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-orange-900 flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-orange-600" />
-                <span>Expressed Needs Flag</span>
-              </span>
-              <span className="text-2xl font-bold text-orange-800 font-mono">{urgentCases.length}</span>
+            <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+              <span className="text-slate-700 font-bold uppercase tracking-wider">{t('statEntitlements')}</span>
+              <AlertTriangle className="w-3.5 h-3.5 text-slate-600" />
             </div>
-            <p className="text-[11px] text-slate-600 mt-2">
-              Survivors requesting urgent police protection, court escort, or Section 15A relief money.
-            </p>
+            <div className="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">
+              {urgentCases.length}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">Pending relief or protection</p>
           </div>
 
-          {/* Card 4: Scheduled For Today */}
           <div
             onClick={() => setFilterType('due_today')}
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+            className={`p-3.5 rounded border transition-colors cursor-pointer ${
               filterType === 'due_today'
-                ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-200 shadow-xs'
-                : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50/20'
+                ? 'bg-blue-50/50 border-blue-400'
+                : 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-blue-700" />
-                <span>Scheduled for Outreach Today</span>
-              </span>
-              <span className="text-2xl font-bold text-blue-800 font-mono">{dueTodayCases.length}</span>
+            <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+              <span className="text-[#0B2545] font-bold uppercase tracking-wider">{t('today')}</span>
+              <Calendar className="w-3.5 h-3.5 text-[#0B2545]" />
             </div>
-            <p className="text-[11px] text-slate-600 mt-2">
-              Automated IVR calls and feature phone SMS outreach scheduled for today.
-            </p>
+            <div className="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">
+              {dueTodayCases.length}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">Due for scheduled call</p>
           </div>
         </div>
       </div>
 
-      {/* COLOR-CODED DISTRESS URGENCY THRESHOLDS SCALE BAR (LIGHT GOVERNMENT THEME) */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Activity className="w-4 h-4 text-blue-700" />
-          <span className="font-bold text-slate-800">Distress Urgency Scale:</span>
-          <span className="text-[11px] text-slate-500 hidden sm:inline">(Green &rarr; Amber &rarr; Orange &rarr; Red)</span>
+      {/* Clinical Urgency Thresholds Selector */}
+      <div className="bg-white border border-slate-200 rounded-lg p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-slate-800">Distress Urgency Index:</span>
+          <span className="text-slate-500 text-[11px] hidden sm:inline">(Automated PHQ/PoA Speech Assessment)</span>
         </div>
 
-        {/* Threshold clickable scale items */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Low Tier: 0 - 34 */}
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setFilterType(filterType === 'model_low' ? 'all' : 'model_low')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+            className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
               filterType === 'model_low'
-                ? 'bg-emerald-100 text-emerald-900 border-emerald-400 font-bold ring-2 ring-emerald-200'
-                : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                ? 'bg-emerald-700 text-white border-emerald-700 font-bold'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
             }`}
-            title="Filter to cases with Low Distress score (<35)"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span className="font-bold font-mono">0–34</span>
-            <span>Low Urgency</span>
-            <span className="px-1.5 py-0.2 rounded bg-white text-emerald-800 text-[10px] font-mono border border-emerald-200">
-              {lowModelCases.length}
-            </span>
+            <span className={`w-2 h-2 rounded-full ${filterType === 'model_low' ? 'bg-white' : 'bg-emerald-600'}`} />
+            <span>0–34 Low</span>
+            <span className="font-mono tabular-nums opacity-80">({lowModelCases.length})</span>
           </button>
 
-          {/* Moderate Tier: 35 - 54 */}
           <button
             onClick={() => setFilterType(filterType === 'model_moderate' ? 'all' : 'model_moderate')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+            className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
               filterType === 'model_moderate'
-                ? 'bg-amber-100 text-amber-900 border-amber-400 font-bold ring-2 ring-amber-200'
-                : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                ? 'bg-slate-800 text-white border-slate-800 font-bold'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
             }`}
-            title="Filter to cases with Moderate Distress score (35–54)"
           >
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span className="font-bold font-mono">35–54</span>
-            <span>Moderate</span>
-            <span className="px-1.5 py-0.2 rounded bg-white text-amber-800 text-[10px] font-mono border border-amber-200">
-              {moderateModelCases.length}
-            </span>
+            <span className={`w-2 h-2 rounded-full ${filterType === 'model_moderate' ? 'bg-white' : 'bg-slate-500'}`} />
+            <span>35–54 Moderate</span>
+            <span className="font-mono tabular-nums opacity-80">({moderateModelCases.length})</span>
           </button>
 
-          {/* High Tier: 55 - 74 */}
           <button
             onClick={() => setFilterType(filterType === 'model_high' ? 'all' : 'model_high')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+            className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
               filterType === 'model_high'
-                ? 'bg-orange-100 text-orange-900 border-orange-400 font-bold ring-2 ring-orange-200'
-                : 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100'
+                ? 'bg-amber-700 text-white border-amber-700 font-bold'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
             }`}
-            title="Filter to cases with High Distress score (55–74)"
           >
-            <span className="w-2 h-2 rounded-full bg-orange-500" />
-            <span className="font-bold font-mono">55–74</span>
-            <span>High</span>
-            <span className="px-1.5 py-0.2 rounded bg-white text-orange-800 text-[10px] font-mono border border-orange-200">
-              {highModelCases.length}
-            </span>
+            <span className={`w-2 h-2 rounded-full ${filterType === 'model_high' ? 'bg-white' : 'bg-amber-500'}`} />
+            <span>55–74 High</span>
+            <span className="font-mono tabular-nums opacity-80">({highModelCases.length})</span>
           </button>
 
-          {/* Critical Tier: 75 - 100 */}
           <button
             onClick={() => setFilterType(filterType === 'model_critical' ? 'all' : 'model_critical')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+            className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
               filterType === 'model_critical'
-                ? 'bg-red-100 text-red-900 border-red-400 font-bold ring-2 ring-red-200'
-                : 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100'
+                ? 'bg-red-700 text-white border-red-700 font-bold'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
             }`}
-            title="Filter to cases with Critical Distress score (75–100)"
           >
-            <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-            <span className="font-bold font-mono">75–100</span>
-            <span>Critical Urgency</span>
-            <span className="px-1.5 py-0.2 rounded bg-white text-red-800 text-[10px] font-mono border border-red-200">
-              {criticalModelCases.length}
-            </span>
+            <span className={`w-2 h-2 rounded-full ${filterType === 'model_critical' ? 'bg-white' : 'bg-red-600'}`} />
+            <span>75–100 Critical</span>
+            <span className="font-mono tabular-nums opacity-80">({criticalModelCases.length})</span>
           </button>
         </div>
       </div>
 
-      {/* Filter and Search Bar (Clean Light Background) */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-        {/* Search */}
-        <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-2 rounded-lg border border-slate-300 flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 text-slate-400" />
+      {/* Filter, Search & View Mode Controls Bar */}
+      <div className="bg-white border border-slate-200 rounded-lg p-3.5 flex flex-wrap items-center justify-between gap-3">
+        {/* Search Input */}
+        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded border border-slate-300 flex-1 min-w-[220px]">
+          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by pseudonym, FIR number, district, caseworker notes..."
-            className="bg-transparent text-xs text-slate-900 placeholder-slate-500 focus:outline-none w-full"
+            placeholder={t('searchPlaceholder')}
+            className="bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none w-full"
           />
         </div>
 
-        {/* District Selector */}
-        <div className="flex items-center gap-2">
-          <Filter className="w-3.5 h-3.5 text-slate-500" />
-          <select
-            value={districtFilter}
-            onChange={(e) => setDistrictFilter(e.target.value)}
-            className="bg-white text-xs text-slate-800 border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-600"
-          >
-            <option value="ALL">All Districts ({cases.length})</option>
-            {uniqueDistricts.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Dropdowns */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <select
+              value={districtFilter}
+              onChange={(e) => setDistrictFilter(e.target.value)}
+              className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500"
+            >
+              <option value="ALL">{t('district')} (All {cases.length})</option>
+              {uniqueDistricts.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Channel Selector */}
-        <div className="flex items-center gap-2">
           <select
             value={channelFilter}
             onChange={(e) => setChannelFilter(e.target.value)}
-            className="bg-white text-xs text-slate-800 border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500"
           >
-            <option value="ALL">All Communication Channels</option>
+            <option value="ALL">{t('filterChannelAll')}</option>
             <option value="IVR_VOICE">IVR Voice Call</option>
             <option value="FEATURE_PHONE_SMS">Feature-Phone SMS</option>
           </select>
-        </div>
 
-        {/* Sort Selector */}
-        <div className="flex items-center gap-2">
-          <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="bg-white text-xs text-slate-800 font-semibold border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-600"
-          >
-            <option value="distress_desc">Highest Distress (Red &rarr; Green)</option>
-            <option value="distress_asc">Lowest Distress (Green &rarr; Red)</option>
-            <option value="urgency">Citizen Self-Reported Urgency</option>
-            <option value="due_date">Scheduled Due Date</option>
-          </select>
-        </div>
+          <div className="flex items-center gap-1.5">
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
+            >
+              <option value="distress_desc">Highest Distress First</option>
+              <option value="distress_asc">Lowest Distress First</option>
+              <option value="urgency">Self-Reported Urgency</option>
+              <option value="due_date">Scheduled Due Date</option>
+            </select>
+          </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200 overflow-x-auto max-w-full">
-          <button
-            onClick={() => setFilterType('all')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              filterType === 'all'
-                ? 'bg-white text-slate-900 shadow-xs border border-slate-300 font-bold'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            All ({cases.length})
-          </button>
-          <button
-            onClick={() => setFilterType('model_critical')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center gap-1 ${
-              filterType === 'model_critical'
-                ? 'bg-red-700 text-white font-bold'
-                : 'text-red-700 hover:bg-red-50'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-            <span>Critical &ge;75 ({criticalModelCases.length})</span>
-          </button>
-          <button
-            onClick={() => setFilterType('lapsed')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              filterType === 'lapsed'
-                ? 'bg-amber-600 text-white font-bold'
-                : 'text-amber-800 hover:bg-amber-50'
-            }`}
-          >
-            Lapsed ({lapsedCases.length})
-          </button>
-          <button
-            onClick={() => setFilterType('urgent_requests')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              filterType === 'urgent_requests'
-                ? 'bg-orange-600 text-white font-bold'
-                : 'text-orange-800 hover:bg-orange-50'
-            }`}
-          >
-            Needs ({urgentCases.length})
-          </button>
-          <button
-            onClick={() => setFilterType('due_today')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              filterType === 'due_today'
-                ? 'bg-blue-700 text-white font-bold'
-                : 'text-blue-800 hover:bg-blue-50'
-            }`}
-          >
-            Due Today ({dueTodayCases.length})
-          </button>
+          {/* View Mode Toggle (Register Table vs Dossier Cards) */}
+          <div className="flex items-center border border-slate-300 rounded p-0.5 bg-slate-50">
+            <button
+              onClick={() => setViewMode('table')}
+              title="Switch to Register Table View"
+              className={`p-1.5 rounded transition-colors ${
+                viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <Table className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              title="Switch to Case Dossier View"
+              className={`p-1.5 rounded transition-colors ${
+                viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Cases List */}
-      <div className="space-y-4">
-        {sortedCases.length === 0 ? (
-          <div className="text-center py-16 bg-white border border-slate-200 rounded-xl text-slate-500 text-xs">
-            No beneficiaries match the current filter selection.
+      {/* Results View: Either Table Register or Clean Dossier Cards */}
+      {sortedCases.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-slate-200 rounded-lg text-slate-500 text-xs">
+          No records match the current filter criteria.
+        </div>
+      ) : viewMode === 'table' ? (
+        /* HIGH DENSITY TRIAGE REGISTER TABLE VIEW */
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+                <tr>
+                  <th className="py-3 px-4">Case ID</th>
+                  <th className="py-3 px-4">Beneficiary Pseudonym</th>
+                  <th className="py-3 px-4">District / State</th>
+                  <th className="py-3 px-4">Court &amp; Relief Stage</th>
+                  <th className="py-3 px-4">Recency</th>
+                  <th className="py-3 px-4">Distress Urgency</th>
+                  <th className="py-3 px-4">Pending Needs</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sortedCases.map((c) => {
+                  const daysSinceContact = getDaysSinceLastContact(c.lastContactDate);
+                  const isLapsed = daysSinceContact > 14 && c.consentStatus !== 'opted_out';
+                  const modelRes = c.therapyModelResult;
+                  const scoreUrgency = modelRes ? getDistressUrgencyConfig(modelRes.distressScore) : null;
+
+                  return (
+                    <tr key={c.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3 px-4 font-mono font-semibold text-slate-900 tabular-nums">
+                        {c.id}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-900">{c.victimPseudonym}</div>
+                        <div className="text-[11px] text-slate-500 font-mono">{c.contactNumber}</div>
+                      </td>
+                      <td className="py-3 px-4 text-slate-700">
+                        <div>{c.district}</div>
+                        <div className="text-[11px] text-slate-500">{c.state}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-slate-800 font-medium capitalize">
+                          {c.courtStage.replace(/_/g, ' ')}
+                        </div>
+                        <div className="text-[11px] text-slate-500 capitalize">
+                          Relief: {c.reliefCompensationStage.replace(/_/g, ' ')}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="tabular-nums font-mono text-slate-800">
+                          {c.lastContactDate || 'None'}
+                        </div>
+                        <div className={`text-[11px] ${isLapsed ? 'text-red-700 font-bold' : 'text-slate-500'}`}>
+                          {daysSinceContact === 999 ? 'No contact' : `${daysSinceContact}d ago`}
+                          {isLapsed && ' (Lapsed)'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {modelRes && scoreUrgency ? (
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${scoreUrgency.dotClass}`} />
+                            <span className="font-mono font-bold tabular-nums text-slate-900">
+                              {modelRes.distressScore}/100
+                            </span>
+                            <span className="text-[11px] text-slate-500">
+                              ({scoreUrgency.label})
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">Pending</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {c.unresolvedNeeds.length > 0 ? (
+                          <span className="text-[11px] text-amber-800 font-medium">
+                            {c.unresolvedNeeds.map(getNeedLabel).join(', ')}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">None recorded</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => onOpenPhoneWithCase(c)}
+                            title="Initiate IVR Call"
+                            className="px-2.5 py-1 rounded bg-[#0B2545] hover:bg-[#12335C] text-white text-[11px] font-medium flex items-center gap-1 transition-colors"
+                          >
+                            <PhoneCall className="w-3 h-3 text-amber-300" />
+                            <span>Call</span>
+                          </button>
+                          <button
+                            onClick={() => setCaseToSchedule(c)}
+                            title="Schedule Check-In"
+                            className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition-colors"
+                          >
+                            Schedule
+                          </button>
+                          <button
+                            onClick={() => onOpenCaseDetail(c)}
+                            title="View Full Dossier"
+                            className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          sortedCases.map((c) => {
+        </div>
+      ) : (
+        /* REFINED CASE DOSSIER CARDS VIEW (NO NESTED CARDS WITHIN CARDS) */
+        <div className="space-y-3">
+          {sortedCases.map((c) => {
             const daysSinceContact = getDaysSinceLastContact(c.lastContactDate);
             const isLapsed = daysSinceContact > 14 && c.consentStatus !== 'opted_out';
-            const isDueToday = c.nextScheduledContact <= todayStr;
             const modelRes = c.therapyModelResult;
-            const distressScore = modelRes?.distressScore;
-            const scoreUrgency = distressScore !== undefined ? getDistressUrgencyConfig(distressScore) : null;
+            const scoreUrgency = modelRes ? getDistressUrgencyConfig(modelRes.distressScore) : null;
 
             return (
               <div
                 key={c.id}
-                className={`bg-white border rounded-xl p-5 transition-all shadow-xs hover:shadow-sm ${
-                  isLapsed
-                    ? 'border-red-300 bg-red-50/15'
-                    : scoreUrgency
-                    ? `${scoreUrgency.cardBorderClass} ${scoreUrgency.cardBgClass}`
-                    : 'border-slate-200'
+                className={`bg-white border rounded-lg p-4 transition-colors ${
+                  scoreUrgency ? scoreUrgency.cardBorderClass : 'border-slate-200'
                 }`}
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  {/* Left Column: Identifiers, Distress Score Badge, Recency & Needs */}
+                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                  {/* Left Metadata Body */}
                   <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
+                    {/* Header Row: Case ID, Pseudonym, Location, and Urgency Indicator */}
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="font-mono text-xs font-bold text-slate-900">
                         {c.id}
                       </span>
-                      <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                      <span className="text-slate-300" aria-hidden="true">·</span>
+                      <h3 className="text-sm font-bold text-slate-900">
                         {c.victimPseudonym}
                       </h3>
-                      <span className="text-xs text-slate-600">
+                      <span className="text-xs text-slate-500">
                         ({c.district}, {c.state})
                       </span>
-                      <span className="text-slate-300">·</span>
-                      <span className="text-xs text-slate-600 font-mono">{c.contactNumber}</span>
+                      <span className="text-slate-300" aria-hidden="true">·</span>
+                      <span className="font-mono text-xs text-slate-500 tabular-nums">
+                        {c.contactNumber}
+                      </span>
 
-                      {/* PROMINENT NUMERICAL THERAPY MODEL DISTRESS SCORE & COLOR-CODED INDICATOR (GREEN TO RED) */}
+                      {/* Clinical Distress Tag (Zero Pill Discipline: Crisp rectangular tag) */}
                       {modelRes && scoreUrgency ? (
                         <div
                           onClick={() => onOpenCaseDetail(c)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer transition-all hover:scale-102 ${scoreUrgency.badgeClass}`}
-                          title={`Therapy Model Distress Score: ${modelRes.distressScore}/100. Urgency Tier: ${scoreUrgency.label} (${scoreUrgency.rangeLabel}). Click to view clinical explainability.`}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold border cursor-pointer ${scoreUrgency.badgeClass}`}
+                          title="Click to inspect model explainability in dossier"
                         >
-                          <span className={`w-2.5 h-2.5 rounded-full ${scoreUrgency.dotClass} flex-shrink-0`} />
-                          <span className="text-[11px] font-bold">
-                            Distress Score:
-                          </span>
-                          <span className="font-mono font-black text-sm tracking-tight">
+                          <span className={`w-2 h-2 rounded-full ${scoreUrgency.dotClass}`} />
+                          <span>Distress:</span>
+                          <span className="font-mono font-bold tabular-nums">
                             {modelRes.distressScore}
                           </span>
-                          <span className="text-[10px] opacity-75 font-mono">/100</span>
-                          <span className="mx-0.5 opacity-30">|</span>
-                          <span className="text-[10px] font-bold uppercase tracking-wider">
-                            {scoreUrgency.label} Urgency
-                          </span>
+                          <span className="text-[10px] opacity-75">/100</span>
+                          <span className="text-slate-400">·</span>
+                          <span className="uppercase text-[10px]">{scoreUrgency.label}</span>
                         </div>
                       ) : (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                          <span>Score: Pending</span>
-                        </div>
+                        <span className="text-[11px] text-slate-400">Assessment Pending</span>
                       )}
 
-                      {/* Citizen Urgency Badge */}
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                          c.currentUrgency === 'critical'
-                            ? 'bg-red-50 text-red-800 border-red-300'
-                            : c.currentUrgency === 'high'
-                            ? 'bg-orange-50 text-orange-800 border-orange-300'
-                            : c.currentUrgency === 'medium'
-                            ? 'bg-blue-50 text-blue-800 border-blue-300'
-                            : 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                        }`}
-                      >
-                        Self-Report: {c.currentUrgency}
-                      </span>
-
-                      {/* Lapsed Contact Alert Badge */}
                       {isLapsed && (
-                        <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 text-[11px] font-bold flex items-center gap-1">
-                          <AlertCircle className="w-3.5 h-3.5 text-red-600" />
-                          <span>Lapsed: {daysSinceContact} Days</span>
-                        </span>
-                      )}
-
-                      {/* Due Today Badge */}
-                      {!isLapsed && isDueToday && (
-                        <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-300 text-[11px] font-semibold flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-blue-700" />
-                          <span>Due Today</span>
-                        </span>
-                      )}
-
-                      {/* Paused Status */}
-                      {c.consentStatus === 'paused' && (
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300 text-[11px] font-medium">
-                          Check-ins Paused by Citizen
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Lapsed: {daysSinceContact}d</span>
                         </span>
                       )}
                     </div>
 
-                    {/* Metadata line: Last contact date, next date, court stage, relief compensation */}
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                    {/* Unboxed Metadata Line with Subtle Dot Separators */}
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-600">
                       <span>
-                        Last Contact:{' '}
-                        <strong className="text-slate-800">
-                          {c.lastContactDate ? `${c.lastContactDate} (${daysSinceContact}d ago)` : 'Never contacted'}
-                        </strong>
+                        Last contact:{' '}
+                        <span className="font-semibold text-slate-800">
+                          {c.lastContactDate ? `${c.lastContactDate} (${daysSinceContact}d ago)` : 'None'}
+                        </span>
                       </span>
-                      <span className="text-slate-300">·</span>
-                      <span>Next Due: <strong className="text-slate-800">{c.nextScheduledContact}</strong></span>
-                      <span className="text-slate-300">·</span>
-                      <span>Channel: <strong className="text-blue-800">{c.preferredChannel || 'IVR_VOICE'}</strong></span>
-                      <span className="text-slate-300">·</span>
-                      <span>Language: <strong className="uppercase text-slate-800">{c.preferredLanguage}</strong></span>
-                      <span className="text-slate-300">·</span>
-                      <span>Court: <strong className="text-emerald-800">{c.courtStage.replace(/_/g, ' ')}</strong></span>
-                      <span className="text-slate-300">·</span>
-                      <span>Relief: <strong className="text-amber-800">{c.reliefCompensationStage.replace(/_/g, ' ')}</strong></span>
+                      <span className="text-slate-300" aria-hidden="true">·</span>
+                      <span>
+                        Next scheduled:{' '}
+                        <span className="font-semibold text-slate-800">{c.nextScheduledContact}</span>
+                      </span>
+                      <span className="text-slate-300" aria-hidden="true">·</span>
+                      <span>
+                        Channel: <span className="font-medium text-slate-900">{c.preferredChannel || 'IVR_VOICE'}</span>
+                      </span>
+                      <span className="text-slate-300" aria-hidden="true">·</span>
+                      <span>
+                        Language: <span className="uppercase font-semibold text-slate-900">{c.preferredLanguage}</span>
+                      </span>
+                      <span className="text-slate-300" aria-hidden="true">·</span>
+                      <span>
+                        Court:{' '}
+                        <span className="font-medium text-slate-800 capitalize">
+                          {c.courtStage.replace(/_/g, ' ')}
+                        </span>
+                      </span>
+                      <span className="text-slate-300" aria-hidden="true">·</span>
+                      <span>
+                        Relief:{' '}
+                        <span className="font-medium text-slate-800 capitalize">
+                          {c.reliefCompensationStage.replace(/_/g, ' ')}
+                        </span>
+                      </span>
                     </div>
 
-                    {/* THERAPY MODEL DISTRESS EVALUATION BOX (CLEAN LIGHT THEME) */}
-                    {modelRes && scoreUrgency ? (
-                      <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5 text-xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            {/* Numerical Score Box */}
-                            <div className="flex flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white border border-slate-300 min-w-[76px] shadow-2xs">
-                              <span className="text-[9px] text-slate-500 uppercase font-mono tracking-wider flex items-center gap-1">
-                                <Cpu className="w-2.5 h-2.5 text-blue-700" />
-                                <span>Distress</span>
-                              </span>
-                              <div className="flex items-baseline gap-0.5">
-                                <span className={`text-2xl font-black font-mono tracking-tight ${scoreUrgency.textClass}`}>
-                                  {modelRes.distressScore}
-                                </span>
-                                <span className="text-[10px] text-slate-500 font-mono">/100</span>
-                              </div>
-                            </div>
-
-                            <div className="space-y-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase border ${scoreUrgency.badgeClass}`}>
-                                  <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${scoreUrgency.dotClass}`} />
-                                  {scoreUrgency.label} Urgency ({scoreUrgency.rangeLabel})
-                                </span>
-                                <span className="text-[11px] text-slate-500">
-                                  Confidence: {(modelRes.confidence * 100).toFixed(0)}% · Adapter: {modelRes.modelSource}
-                                </span>
-                              </div>
-                              <div className="text-[11px] text-slate-700">
-                                <span className="text-slate-500 font-medium">Detected Clinical Signal: </span>
-                                <span className="text-slate-900 font-semibold">{modelRes.detectedIndicators[0] || 'Active assessment'}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 self-start sm:self-auto">
-                            <button
-                              onClick={() => handleReScoreCase(c.id)}
-                              disabled={scoringCaseId === c.id}
-                              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 border border-slate-300 transition-colors shadow-2xs"
-                              title="Re-run therapy distress model inference"
-                            >
-                              <RotateCw className={`w-3 h-3 ${scoringCaseId === c.id ? 'animate-spin' : ''}`} />
-                              <span>{scoringCaseId === c.id ? 'Scoring...' : 'Re-Score'}</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Visual Linear Continuum Meter (Green to Red Scale) */}
-                        <div className="pt-1 bg-white p-2.5 rounded-lg border border-slate-200">
-                          <div className="flex items-center justify-between text-[10px] font-bold mb-1.5">
-                            <span className="text-emerald-700 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                              <span>0–34 Low Urgency</span>
-                            </span>
-                            <span className="text-amber-700 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                              <span>35–54 Moderate</span>
-                            </span>
-                            <span className="text-orange-700 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                              <span>55–74 High</span>
-                            </span>
-                            <span className="text-red-700 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
-                              <span>75–100 Critical</span>
-                            </span>
-                          </div>
-
-                          {/* Multi-segment continuous color track */}
-                          <div className="relative h-2 rounded-full overflow-hidden bg-slate-200 flex shadow-inner">
-                            <div className="w-[35%] bg-emerald-500 h-full border-r border-white" title="Low Urgency (0–34)" />
-                            <div className="w-[20%] bg-amber-400 h-full border-r border-white" title="Moderate Urgency (35–54)" />
-                            <div className="w-[20%] bg-orange-500 h-full border-r border-white" title="High Urgency (55–74)" />
-                            <div className="w-[25%] bg-red-600 h-full" title="Critical Urgency (75–100)" />
-                          </div>
-
-                          {/* Pointer Pin / Needle with Numerical Value */}
-                          <div className="relative h-4 w-full">
-                            <div
-                              className="absolute -top-1 -translate-x-1/2 flex flex-col items-center transition-all duration-300"
-                              style={{ left: `${Math.min(97, Math.max(3, modelRes.distressScore))}%` }}
-                            >
-                              <div className={`w-2.5 h-2.5 rotate-45 ${scoreUrgency.barColor} ring-2 ring-white shadow-xs`} />
-                              <span className={`text-[10px] font-mono font-extrabold px-1.5 py-0.2 rounded border shadow-2xs mt-0.5 ${scoreUrgency.badgeClass}`}>
-                                {modelRes.distressScore}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
-                        <span>Therapy model score pending for this beneficiary.</span>
+                    {/* Clinical Indicator & Detected Need Text Line */}
+                    {modelRes && (
+                      <div className="text-xs text-slate-600 pt-0.5">
+                        <span className="font-medium text-slate-500">Clinical Signal: </span>
+                        <span className="text-slate-800 font-medium">
+                          {modelRes.detectedIndicators[0] || 'Standard check-in nominal'}
+                        </span>
+                        <span className="text-slate-400 mx-1.5" aria-hidden="true">·</span>
+                        <span className="text-slate-500">Confidence: </span>
+                        <span className="font-mono tabular-nums text-slate-700">
+                          {(modelRes.confidence * 100).toFixed(0)}%
+                        </span>
                         <button
                           onClick={() => handleReScoreCase(c.id)}
                           disabled={scoringCaseId === c.id}
-                          className="text-blue-700 hover:text-blue-800 underline font-semibold text-xs"
+                          className="ml-2.5 text-blue-700 hover:text-blue-900 font-medium underline text-[11px]"
                         >
-                          Run Model Score
+                          {scoringCaseId === c.id ? 'Scoring...' : 'Re-Evaluate'}
                         </button>
                       </div>
                     )}
 
-                    {/* Expressed Needs Badges */}
+                    {/* Expressed Support Needs */}
                     {c.unresolvedNeeds.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="text-[11px] text-slate-600 font-semibold">Expressed Needs:</span>
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
+                        <span className="text-slate-500 font-medium">Recorded Needs:</span>
                         {c.unresolvedNeeds.map((need, idx) => (
                           <span
                             key={idx}
-                            className="text-xs px-2.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-300 font-semibold flex items-center gap-1"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
                           >
                             <AlertTriangle className="w-3 h-3 text-amber-600" />
                             <span>{getNeedLabel(need)}</span>
@@ -861,78 +780,61 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
                         ))}
                       </div>
                     )}
-
-                    {/* Upcoming Scheduled Interactions */}
-                    {c.scheduledInteractions && c.scheduledInteractions.filter(i => i.status === 'pending').length > 0 && (
-                      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-blue-900">
-                        <Calendar className="w-3.5 h-3.5 text-blue-700" />
-                        <span className="font-semibold">Upcoming Scheduled:</span>
-                        {c.scheduledInteractions.filter(i => i.status === 'pending').map((inter) => (
-                          <span
-                            key={inter.id}
-                            className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-[11px] text-blue-900 font-medium"
-                          >
-                            {inter.scheduledDate} ({inter.timeSlot}): {inter.purpose}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   {/* Right Column: Caseworker Action Controls */}
-                  <div className="flex flex-wrap sm:flex-nowrap lg:flex-col items-stretch lg:items-end gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => onOpenPhoneWithCase(c)}
-                      className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
-                    >
-                      <PhoneCall className="w-3.5 h-3.5" />
-                      <span>{c.preferredChannel === 'FEATURE_PHONE_SMS' ? 'Simulate SMS/IVR' : 'Launch IVR Call'}</span>
-                    </button>
+                  <div className="flex items-center lg:flex-col lg:items-end gap-2 shrink-0 self-start">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onOpenPhoneWithCase(c)}
+                        className="px-3 py-1.5 rounded bg-[#0B2545] hover:bg-[#12335C] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                      >
+                        <PhoneCall className="w-3.5 h-3.5 text-amber-300" />
+                        <span>{t('btnCall')}</span>
+                      </button>
 
-                    <button
-                      onClick={() => setCaseToSchedule(c)}
-                      className="px-3.5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
-                    >
-                      <CalendarPlus className="w-3.5 h-3.5" />
-                      <span>Schedule Interaction</span>
-                    </button>
+                      <button
+                        onClick={() => setCaseToSchedule(c)}
+                        className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors border border-slate-300"
+                      >
+                        <CalendarPlus className="w-3.5 h-3.5 text-slate-600" />
+                        <span>{t('btnSchedule')}</span>
+                      </button>
+                    </div>
 
-                    <div className="flex items-center gap-2 w-full lg:w-auto">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => setCaseToEdit(c)}
-                        className="flex-1 lg:flex-initial px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center justify-center gap-1 transition-colors border border-slate-300"
+                        className="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1"
                       >
-                        <Edit3 className="w-3.5 h-3.5 text-slate-600" />
-                        <span>Update Record</span>
+                        <Edit3 className="w-3 h-3" />
+                        <span>{t('btnEdit')}</span>
                       </button>
 
                       <button
                         onClick={() => onOpenCaseDetail(c)}
-                        className="flex-1 lg:flex-initial px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center justify-center gap-1 transition-colors border border-slate-300"
+                        className="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1 font-medium"
                       >
-                        <Eye className="w-3.5 h-3.5 text-slate-600" />
-                        <span>View Ledger</span>
+                        <Eye className="w-3 h-3" />
+                        <span>{t('btnDossier')}</span>
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
-      {/* Model Integration Modal */}
+      {/* Child Modals */}
       {showModelModal && (
         <ModelIntegrationModal
           onClose={() => setShowModelModal(false)}
-          onScoresUpdated={() => {
-            triggerToast('Scores refreshed across all beneficiaries.');
-          }}
+          onScoresUpdated={() => triggerToast('Clinical scores refreshed across all beneficiaries.')}
         />
       )}
 
-      {/* Schedule Interaction Modal */}
       {caseToSchedule && (
         <ScheduleInteractionModal
           atrocityCase={caseToSchedule}
@@ -943,24 +845,18 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
         />
       )}
 
-      {/* Edit Case Record Modal */}
       {caseToEdit && (
         <EditCaseRecordModal
           atrocityCase={caseToEdit}
           onClose={() => setCaseToEdit(null)}
-          onSaved={() => {
-            triggerToast('Victim record updated successfully.');
-          }}
+          onSaved={() => triggerToast('Beneficiary record updated successfully.')}
         />
       )}
 
-      {/* Scheduled Batch Runner Modal */}
       {showBatchRunner && (
         <ScheduledBatchRunnerModal
           onClose={() => setShowBatchRunner(false)}
-          onRunCompleted={() => {
-            triggerToast('Scheduled outreach batch executed.');
-          }}
+          onRunCompleted={() => triggerToast('Outreach batch run completed.')}
         />
       )}
     </div>

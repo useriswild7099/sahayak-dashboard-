@@ -17,9 +17,42 @@ class IVREngineService {
   private listeners: Set<Listener> = new Set();
   private timerInterval: number | null = null;
   private currentCaseId: string | null = null;
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
   private onCallCompletedCallback: ((record: CheckInRecord) => void) | null = null;
   private isSyntheticVoiceAvailable: boolean = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  private cachedVoices: SpeechSynthesisVoice[] = [];
+  private safetyTimer: number | null = null;
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+
+  constructor() {
+    this.initVoices();
+  }
+
+  private initVoices(): void {
+    if (!this.isSyntheticVoiceAvailable) return;
+    try {
+      const update = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+          this.cachedVoices = voices;
+          this.updateDetectedVoiceStats();
+        }
+      };
+      update();
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = update;
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  private updateDetectedVoiceStats(): void {
+    const indicCodes = ['hi', 'bn', 'ta', 'te', 'mr', 'kn', 'gu', 'or'];
+    const count = this.cachedVoices.filter((v) =>
+      indicCodes.some((code) => v.lang.toLowerCase().startsWith(code) || v.name.toLowerCase().includes(code))
+    ).length;
+    this.state.detectedIndicVoicesCount = count;
+  }
 
   private getInitialState(lang: LanguageCode = 'hi'): IVRSessionState {
     return {
@@ -31,6 +64,9 @@ class IVREngineService {
       keypadInputBuffer: '',
       currentPromptText: '',
       currentPromptAudioPlaying: false,
+      activeVoiceName: undefined,
+      speechEngineMode: undefined,
+      detectedIndicVoicesCount: 0,
       answers: {
         selectedNeeds: [],
       },
@@ -79,7 +115,7 @@ class IVREngineService {
   }
 
   /**
-   * Start an IVR call to a beneficiary case
+   * Start an IVR call to a beneficiary case in the chosen language
    */
   public initiateCall(caseId: string, preferredLanguage: LanguageCode = 'hi'): void {
     this.endCall(false); // Clean any previous call
@@ -105,15 +141,15 @@ class IVREngineService {
         }
         this.notify();
 
-        // Simulate pickup after 2.8 seconds
+        // Simulate pickup after 2.5 seconds
         setTimeout(() => {
           if (this.state.step === 'RINGING') {
             dtmfAudioService.stopRingingTone();
             this.transitionToStep('WELCOME');
           }
-        }, 2800);
+        }, 2500);
       }
-    }, 1200);
+    }, 1000);
   }
 
   /**
@@ -126,7 +162,8 @@ class IVREngineService {
 
     const script = IVR_SCRIPTS[step];
     if (script) {
-      const text = script.promptText[this.state.language] || script.promptText['en'];
+      const text = script.promptText[this.state.language] || script.promptText['hi'] || script.promptText['en'];
+      const romanized = script.romanizedPromptText?.[this.state.language];
       this.state.currentPromptText = text;
       this.state.callLog.push({
         sender: 'SYSTEM',
@@ -134,20 +171,27 @@ class IVREngineService {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       });
       this.notify();
-      this.speakText(text, () => {
-        // Step specific auto-advancements
-        if (step === 'WELCOME') {
-          setTimeout(() => {
-            if (this.state.step === 'WELCOME') {
-              this.transitionToStep('CONSENT_CHECK');
-            }
-          }, 600);
-        } else if (step === 'CONFIRMATION') {
-          setTimeout(() => {
-            this.finishCall('completed');
-          }, 1800);
-        }
-      });
+
+      this.speakText(
+        text,
+        () => {
+          // Step specific auto-advancements
+          if (this.state.step === 'WELCOME') {
+            setTimeout(() => {
+              if (this.state.step === 'WELCOME') {
+                this.transitionToStep('CONSENT_CHECK');
+              }
+            }, 400);
+          } else if (this.state.step === 'CONFIRMATION') {
+            setTimeout(() => {
+              if (this.state.step === 'CONFIRMATION') {
+                this.finishCall('completed');
+              }
+            }, 1200);
+          }
+        },
+        romanized
+      );
     } else {
       this.notify();
     }
@@ -158,7 +202,6 @@ class IVREngineService {
    */
   public pressKey(key: string): void {
     if (this.state.step === 'IDLE' || this.state.step === 'ENDED') {
-      // Just play DTMF sound if phone is idle
       dtmfAudioService.playKeyTone(key);
       return;
     }
@@ -178,6 +221,12 @@ class IVREngineService {
     // Interrupt current prompt when key is pressed (Telephony Barge-In capability)
     this.stopSpeech();
 
+    // If pressed during WELCOME, instantly skip to CONSENT_CHECK
+    if (this.state.step === 'WELCOME') {
+      this.transitionToStep('CONSENT_CHECK');
+      return;
+    }
+
     // Handle key according to current step
     switch (this.state.step) {
       case 'CONSENT_CHECK':
@@ -186,24 +235,45 @@ class IVREngineService {
           this.transitionToStep('STATUS_ASSESSMENT');
         } else if (key === '2') {
           this.state.answers.rescheduleRequested = true;
-          this.state.currentPromptText = 'Check-in rescheduled for tomorrow. Take care.';
+          const rescheduleScript = IVR_SCRIPTS.RESCHEDULED;
+          const rescheduleText =
+            rescheduleScript?.promptText[this.state.language] ||
+            'आपकी अनुरोध पर यह चेक-इन कल के लिए पुनर्निर्धारित कर दिया गया है। धन्यवाद।';
+          const rescheduleRomanized = rescheduleScript?.romanizedPromptText?.[this.state.language];
+          this.state.currentPromptText = rescheduleText;
+          this.state.callLog.push({
+            sender: 'SYSTEM',
+            text: rescheduleText,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          });
+          this.notify();
           this.speakText(
-            this.state.language === 'hi'
-              ? 'आपकी अनुरोध पर यह चेक-इन कल के लिए पुनर्निर्धारित कर दिया गया है। धन्यवाद।'
-              : 'Your check-in has been rescheduled for tomorrow as requested. Thank you.',
+            rescheduleText,
             () => {
               this.finishCall('rescheduled');
-            }
+            },
+            rescheduleRomanized
           );
         } else if (key === '9') {
           this.state.answers.consentConfirmed = false;
+          const optOutScript = IVR_SCRIPTS.OPTED_OUT;
+          const optOutText =
+            optOutScript?.promptText[this.state.language] ||
+            'आपकी इच्छा का सम्मान करते हुए स्वचालित कॉल रोक दिए गए हैं।';
+          const optOutRomanized = optOutScript?.romanizedPromptText?.[this.state.language];
+          this.state.currentPromptText = optOutText;
+          this.state.callLog.push({
+            sender: 'SYSTEM',
+            text: optOutText,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          });
+          this.notify();
           this.speakText(
-            this.state.language === 'hi'
-              ? 'आपकी इच्छा का सम्मान करते हुए चेक-इन रोक दिया गया है। आप किसी भी समय अपनी प्राथमिकताएं बदल सकते हैं।'
-              : 'Respecting your decision, automated check-ins have been paused. You may reactivate anytime.',
+            optOutText,
             () => {
               this.finishCall('opted_out');
-            }
+            },
+            optOutRomanized
           );
         }
         break;
@@ -242,7 +312,7 @@ class IVREngineService {
           // Sound beep for voice recording
           setTimeout(() => {
             dtmfAudioService.playPromptBeep();
-          }, 800);
+          }, 600);
         }
         break;
       }
@@ -250,6 +320,11 @@ class IVREngineService {
       case 'VOICE_MESSAGE':
         // Pressing # or any key completes voice message
         this.transitionToStep('CONFIRMATION');
+        break;
+
+      case 'CONFIRMATION':
+        // Pressing any key finishes call
+        this.finishCall('completed');
         break;
 
       default:
@@ -322,7 +397,7 @@ class IVREngineService {
     }
     this.stopSpeech();
     dtmfAudioService.stopRingingTone();
-    if (triggerSound && this.state.step !== 'IDLE' && this.state.step !== 'ENDED') {
+    if (triggerSound) {
       dtmfAudioService.playCallEndTone();
     }
     this.state.step = 'ENDED';
@@ -331,31 +406,46 @@ class IVREngineService {
   }
 
   /**
-   * Reset session back to IDLE
-   */
-  public resetToIdle(): void {
-    this.endCall(false);
-    this.state = this.getInitialState(this.state.language);
-    this.notify();
-  }
-
-  /**
-   * Play current prompt again
+   * Replay current step prompt in current language
    */
   public playCurrentStepPrompt(): void {
-    if (this.state.step === 'IDLE' || this.state.step === 'ENDED' || this.state.step === 'RINGING' || this.state.step === 'DIALING') {
-      return;
-    }
     const script = IVR_SCRIPTS[this.state.step];
     if (script) {
-      const text = script.promptText[this.state.language] || script.promptText['en'];
+      const text = script.promptText[this.state.language] || script.promptText['hi'] || script.promptText['en'];
+      const romanized = script.romanizedPromptText?.[this.state.language];
       this.state.currentPromptText = text;
       this.notify();
-      this.speakText(text);
+      this.speakText(
+        text,
+        () => {
+          if (this.state.step === 'WELCOME') {
+            setTimeout(() => {
+              if (this.state.step === 'WELCOME') {
+                this.transitionToStep('CONSENT_CHECK');
+              }
+            }, 400);
+          } else if (this.state.step === 'CONFIRMATION') {
+            setTimeout(() => {
+              if (this.state.step === 'CONFIRMATION') {
+                this.finishCall('completed');
+              }
+            }, 1200);
+          }
+        },
+        romanized
+      );
     }
+  }
+
+  public replayPrompt(): void {
+    this.playCurrentStepPrompt();
   }
 
   private stopSpeech(): void {
+    if (this.safetyTimer !== null) {
+      clearTimeout(this.safetyTimer);
+      this.safetyTimer = null;
+    }
     if (this.isSyntheticVoiceAvailable) {
       try {
         window.speechSynthesis.cancel();
@@ -363,37 +453,152 @@ class IVREngineService {
         // Ignore
       }
     }
+    this.activeUtterance = null;
     this.state.currentPromptAudioPlaying = false;
   }
 
-  private speakText(text: string, onEnd?: () => void): void {
+  /**
+   * Resolve best synthesizer voice and text for native vs phonetic delivery
+   */
+  private resolveVoiceAndText(
+    lang: LanguageCode,
+    nativeText: string,
+    romanizedText?: string
+  ): {
+    voice: SpeechSynthesisVoice | null;
+    textToSpeak: string;
+    langCode: string;
+    mode: 'NATIVE_VOICE' | 'INDIAN_PHONETIC' | 'PHONETIC_FALLBACK';
+    voiceName: string;
+  } {
+    if (this.cachedVoices.length === 0 && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      this.cachedVoices = window.speechSynthesis.getVoices();
+      this.updateDetectedVoiceStats();
+    }
+
+    const langInfo = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+    const targetLocale = langInfo ? langInfo.speechLocale : 'hi-IN';
+
+    // 1. Look for native voice matching language code or name
+    const exactVoice = this.cachedVoices.find((v) => {
+      const vLang = v.lang.toLowerCase();
+      const vName = v.name.toLowerCase();
+      const targetPrefix = lang.toLowerCase();
+      return (
+        vLang.startsWith(targetPrefix) ||
+        vLang.includes(targetLocale.toLowerCase()) ||
+        (langInfo && (vName.includes(langInfo.label.toLowerCase()) || vName.includes(langInfo.nativeLabel.toLowerCase())))
+      );
+    });
+
+    if (exactVoice) {
+      return {
+        voice: exactVoice,
+        textToSpeak: nativeText,
+        langCode: exactVoice.lang || targetLocale,
+        mode: 'NATIVE_VOICE',
+        voiceName: `${exactVoice.name} (${exactVoice.lang})`,
+      };
+    }
+
+    // 2. If user language is English, use any English voice
+    if (lang === 'en') {
+      const enVoice =
+        this.cachedVoices.find((v) => v.lang.toLowerCase().startsWith('en')) ||
+        this.cachedVoices[0] ||
+        null;
+      return {
+        voice: enVoice,
+        textToSpeak: nativeText,
+        langCode: enVoice?.lang || 'en-IN',
+        mode: 'NATIVE_VOICE',
+        voiceName: enVoice ? `${enVoice.name} (${enVoice.lang})` : 'System Default',
+      };
+    }
+
+    // 3. For Indic languages without a native voice pack on user's machine:
+    // Check for Indian English voice (e.g. en-IN, Google English India, Heera, Veena, Rishi)
+    // and deliver phonetic transliteration so spoken Hindi/Indic is clearly articulated!
+    const indianVoice = this.cachedVoices.find((v) => {
+      const vLang = v.lang.toLowerCase();
+      const vName = v.name.toLowerCase();
+      return (
+        vLang.includes('-in') ||
+        vName.includes('india') ||
+        vName.includes('heera') ||
+        vName.includes('veena') ||
+        vName.includes('ravi') ||
+        vName.includes('rishi') ||
+        vName.includes('neerja') ||
+        vName.includes('prabhat')
+      );
+    });
+
+    if (indianVoice) {
+      return {
+        voice: indianVoice,
+        textToSpeak: romanizedText || nativeText,
+        langCode: indianVoice.lang || 'en-IN',
+        mode: 'INDIAN_PHONETIC',
+        voiceName: `${indianVoice.name} (Indian Accent)`,
+      };
+    }
+
+    // 4. Default fallback voice with phonetic transliteration
+    const fallbackVoice =
+      this.cachedVoices.find((v) => v.lang.toLowerCase().startsWith('en')) ||
+      this.cachedVoices[0] ||
+      null;
+
+    return {
+      voice: fallbackVoice,
+      textToSpeak: romanizedText || nativeText,
+      langCode: fallbackVoice?.lang || 'en-US',
+      mode: 'PHONETIC_FALLBACK',
+      voiceName: fallbackVoice ? `${fallbackVoice.name} (Phonetic Transliteration)` : 'Phonetic Synthesizer',
+    };
+  }
+
+  /**
+   * Synthesize multilingual speech safely across all operating systems & browsers
+   */
+  private speakText(text: string, onEnd?: () => void, romanizedText?: string): void {
     this.stopSpeech();
-    if (this.state.isMuted || !this.state.isSpeakerOn || !this.isSyntheticVoiceAvailable) {
-      if (onEnd) {
-        // Provide reasonable pacing when muted or audio is not playing
-        const simulatedDuration = Math.max(1200, Math.min(6000, text.length * 40));
-        setTimeout(onEnd, simulatedDuration);
+
+    let callbackInvoked = false;
+    const safeEnd = () => {
+      if (!callbackInvoked) {
+        callbackInvoked = true;
+        if (this.safetyTimer !== null) {
+          clearTimeout(this.safetyTimer);
+          this.safetyTimer = null;
+        }
+        this.activeUtterance = null;
+        this.state.currentPromptAudioPlaying = false;
+        this.notify();
+        if (onEnd) onEnd();
       }
+    };
+
+    // If muted or speaker is off or speech synthesis not supported, simulate duration
+    if (this.state.isMuted || !this.state.isSpeakerOn || !this.isSyntheticVoiceAvailable) {
+      const simulatedDuration = Math.max(1000, Math.min(3500, text.length * 30));
+      this.safetyTimer = window.setTimeout(safeEnd, simulatedDuration);
       return;
     }
 
     try {
-      const utterance = new SpeechSynthesisUtterance(text);
-      this.currentUtterance = utterance;
+      const resolution = this.resolveVoiceAndText(this.state.language, text, romanizedText);
+      this.state.activeVoiceName = resolution.voiceName;
+      this.state.speechEngineMode = resolution.mode;
 
-      const langInfo = SUPPORTED_LANGUAGES.find((l) => l.code === this.state.language);
-      const targetLocale = langInfo ? langInfo.speechLocale : 'en-IN';
-      utterance.lang = targetLocale;
-      utterance.rate = 0.95; // Clear, calm, respectful tempo
+      const utterance = new SpeechSynthesisUtterance(resolution.textToSpeak);
+      this.activeUtterance = utterance; // Prevent garbage collection bug in Chrome
+      utterance.rate = 0.95;
       utterance.pitch = 1.0;
-
-      // Try selecting regional voice if available
-      const voices = window.speechSynthesis.getVoices();
-      const matchingVoice = voices.find(
-        (v) => v.lang.toLowerCase().startsWith(this.state.language) || v.lang.toLowerCase().includes(targetLocale.toLowerCase())
-      );
-      if (matchingVoice) {
-        utterance.voice = matchingVoice;
+      utterance.lang = resolution.langCode;
+      if (resolution.voice) {
+        utterance.voice = resolution.voice;
       }
 
       utterance.onstart = () => {
@@ -402,22 +607,30 @@ class IVREngineService {
       };
 
       utterance.onend = () => {
-        this.state.currentPromptAudioPlaying = false;
-        this.notify();
-        if (onEnd) onEnd();
+        safeEnd();
       };
 
-      utterance.onerror = () => {
-        this.state.currentPromptAudioPlaying = false;
-        this.notify();
-        if (onEnd) onEnd();
+      utterance.onerror = (e) => {
+        console.warn('IVR Speech Synthesis event:', e);
+        safeEnd();
       };
+
+      // Generous watchdog timeout to prevent speech hanging if browser stalls
+      const wordsCount = resolution.textToSpeak.split(' ').length;
+      const maxExpectedDuration = Math.max(wordsCount * 550, 4500);
+      this.safetyTimer = window.setTimeout(safeEnd, maxExpectedDuration);
+
+      // Play soft prompt tone on feature phone speaker
+      dtmfAudioService.playPromptBeep();
+
+      // Resume speech synthesis if paused (common Chromium behavior)
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
 
       window.speechSynthesis.speak(utterance);
     } catch {
-      this.state.currentPromptAudioPlaying = false;
-      this.notify();
-      if (onEnd) setTimeout(onEnd, 2000);
+      safeEnd();
     }
   }
 }
