@@ -6,6 +6,7 @@ import {
   SupportNeedType,
 } from '../types/ivr';
 import { storageService } from './storageService';
+import { therapyModelService } from './therapyModelService';
 
 const SMS_STORAGE_KEY = 'mosje_sms_messages_v1';
 
@@ -300,7 +301,6 @@ class SMSService {
     // Run therapy model inference on updated SMS conversation corpus in background
     setTimeout(async () => {
       try {
-        const { therapyModelService } = await import('./therapyModelService');
         await therapyModelService.scoreCase(caseId);
       } catch (err) {
         console.warn('Therapy model scoring on inbound SMS failed:', err);

@@ -8,6 +8,7 @@ import {
   Clock,
   FileText,
   Cpu,
+  Printer,
 } from 'lucide-react';
 import { AtrocityCase, CheckInRecord, SupportNeedType } from '../types/ivr';
 import { storageService } from '../services/storageService';
@@ -127,6 +128,14 @@ export const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => window.print()}
+              title="Print Official Section 15A Court Dossier"
+              className="px-3 py-1.5 rounded bg-white hover:bg-slate-100 text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-300 shadow-xs"
+            >
+              <Printer className="w-3.5 h-3.5 text-slate-600" />
+              <span className="hidden sm:inline">Print Dossier</span>
+            </button>
             <button
               onClick={() => {
                 onClose();

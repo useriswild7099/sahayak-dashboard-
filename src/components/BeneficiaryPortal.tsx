@@ -21,6 +21,7 @@ import {
   Server,
   Download,
   Trash2,
+  Printer,
 } from 'lucide-react';
 import { AtrocityCase, CheckInRecord, LanguageCode, SUPPORTED_LANGUAGES } from '../types/ivr';
 import { storageService } from '../services/storageService';
@@ -516,14 +517,24 @@ export const BeneficiaryPortal: React.FC<BeneficiaryPortalProps> = ({
                     Under DPDP statutory compliance, you have the right to audit and view what records are maintained under your case ID.
                   </p>
                 </div>
-                <LiquidGlassButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleExportData}
-                  icon={<Download className="w-3.5 h-3.5 text-blue-700" />}
-                >
-                  Download Ledger Bundle
-                </LiquidGlassButton>
+                <div className="flex flex-wrap items-center gap-2">
+                  <LiquidGlassButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => window.print()}
+                    icon={<Printer className="w-3.5 h-3.5 text-slate-700" />}
+                  >
+                    Print Case Ledger
+                  </LiquidGlassButton>
+                  <LiquidGlassButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleExportData}
+                    icon={<Download className="w-3.5 h-3.5 text-blue-700" />}
+                  >
+                    Download Ledger Bundle
+                  </LiquidGlassButton>
+                </div>
               </div>
 
               <div className="space-y-2 pt-2">

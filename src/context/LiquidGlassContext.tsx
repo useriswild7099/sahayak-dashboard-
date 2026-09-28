@@ -83,8 +83,9 @@ interface LiquidGlassContextType {
 }
 
 const DEFAULT_CONFIG: LiquidGlassConfig = {
-  ...PRESETS.apple_liquid,
-  presetName: 'apple_liquid',
+  ...PRESETS.minimalist,
+  enabled: false,
+  presetName: 'minimalist',
 };
 
 const LiquidGlassContext = createContext<LiquidGlassContextType | null>(null);

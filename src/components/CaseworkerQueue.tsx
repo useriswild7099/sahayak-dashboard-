@@ -18,6 +18,7 @@ import {
   ArrowUpDown,
   Table,
   LayoutGrid,
+  Printer,
 } from 'lucide-react';
 import { AtrocityCase, CheckInRecord, SupportNeedType } from '../types/ivr';
 import { ScheduleInteractionModal } from './ScheduleInteractionModal';
@@ -297,6 +298,16 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Print Register Action */}
+            <LiquidGlassButton
+              variant="secondary"
+              size="md"
+              onClick={() => window.print()}
+              icon={<Printer className="w-3.5 h-3.5 text-slate-700" />}
+            >
+              Print Register
+            </LiquidGlassButton>
+
             {/* Model Hub Action */}
             <LiquidGlassButton
               variant="secondary"
@@ -391,80 +402,12 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
         </div>
       </LiquidGlassContainer>
 
-      {/* Clinical Urgency Thresholds Selector (Minimalist Horizontal Strip) */}
-      <div className="bg-white border border-slate-300 rounded p-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-800">Distress Urgency Index:</span>
-          <span className="text-slate-500 text-[11px] hidden sm:inline">(Automated PHQ/PoA Speech Assessment)</span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            onClick={() => setFilterType('all')}
-            className={`px-2.5 py-1 rounded-sm text-xs transition-colors border ${
-              filterType === 'all'
-                ? 'bg-slate-800 text-white border-slate-800 font-bold'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-            }`}
-          >
-            All Cases ({cases.length})
-          </button>
-
-          <button
-            onClick={() => setFilterType(filterType === 'model_low' ? 'all' : 'model_low')}
-            className={`px-2.5 py-1 rounded-sm text-xs transition-colors flex items-center gap-1.5 border ${
-              filterType === 'model_low'
-                ? 'bg-emerald-800 text-white border-emerald-800 font-bold'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${filterType === 'model_low' ? 'bg-white' : 'bg-emerald-600'}`} />
-            <span>0–34 Low ({lowModelCases.length})</span>
-          </button>
-
-          <button
-            onClick={() => setFilterType(filterType === 'model_moderate' ? 'all' : 'model_moderate')}
-            className={`px-2.5 py-1 rounded-sm text-xs transition-colors flex items-center gap-1.5 border ${
-              filterType === 'model_moderate'
-                ? 'bg-slate-700 text-white border-slate-700 font-bold'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${filterType === 'model_moderate' ? 'bg-white' : 'bg-slate-500'}`} />
-            <span>35–54 Moderate ({moderateModelCases.length})</span>
-          </button>
-
-          <button
-            onClick={() => setFilterType(filterType === 'model_high' ? 'all' : 'model_high')}
-            className={`px-2.5 py-1 rounded-sm text-xs transition-colors flex items-center gap-1.5 border ${
-              filterType === 'model_high'
-                ? 'bg-amber-700 text-white border-amber-700 font-bold'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${filterType === 'model_high' ? 'bg-white' : 'bg-amber-500'}`} />
-            <span>55–74 High ({highModelCases.length})</span>
-          </button>
-
-          <button
-            onClick={() => setFilterType(filterType === 'model_critical' ? 'all' : 'model_critical')}
-            className={`px-2.5 py-1 rounded-sm text-xs transition-colors flex items-center gap-1.5 border ${
-              filterType === 'model_critical'
-                ? 'bg-red-700 text-white border-red-700 font-bold'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${filterType === 'model_critical' ? 'bg-white' : 'bg-red-600'}`} />
-            <span>75–100 Critical ({criticalModelCases.length})</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Filter, Search & View Mode Controls Bar */}
-      <LiquidGlassContainer borderRadius={10} className="p-3">
+      {/* Unified Institutional Filter & Registry Control Toolbar */}
+      <LiquidGlassContainer borderRadius={10} className="p-3.5 space-y-3">
+        {/* Row 1: Search, Jurisdictional Dropdowns & View Mode */}
         <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs">
           {/* Search Input */}
-          <div className="flex items-center gap-2 bg-white/90 px-2.5 py-1.5 rounded border border-slate-300 flex-1 min-w-[200px]">
+          <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded border border-slate-300 flex-1 min-w-[220px]">
             <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <input
               type="text"
@@ -482,7 +425,7 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
               <select
                 value={districtFilter}
                 onChange={(e) => setDistrictFilter(e.target.value)}
-                className="bg-white/90 text-xs text-slate-800 border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
+                className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
               >
                 <option value="ALL">{t('district')} (All {cases.length})</option>
                 {uniqueDistricts.map((d) => (
@@ -496,7 +439,7 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
             <select
               value={channelFilter}
               onChange={(e) => setChannelFilter(e.target.value)}
-              className="bg-white/90 text-xs text-slate-800 border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
+              className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
             >
               <option value="ALL">{t('filterChannelAll')}</option>
               <option value="IVR_VOICE">IVR Voice Call</option>
@@ -508,7 +451,7 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-white/90 text-xs text-slate-800 border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
+                className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
               >
                 <option value="distress_desc">Highest Distress First</option>
                 <option value="distress_asc">Lowest Distress First</option>
@@ -518,11 +461,11 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
             </div>
 
             {/* View Mode Toggle (Register Table vs Dossier Cards) */}
-            <div className="flex items-center border border-slate-300 rounded p-0.5 bg-slate-100/80">
+            <div className="flex items-center border border-slate-300 rounded p-0.5 bg-slate-100">
               <button
                 onClick={() => setViewMode('table')}
                 title="Switch to Register Table View"
-                className={`px-2 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition-colors ${
+                className={`px-2.5 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition-colors ${
                   viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs border border-slate-300' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -532,7 +475,7 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
               <button
                 onClick={() => setViewMode('cards')}
                 title="Switch to Case Dossier View"
-                className={`px-2 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition-colors ${
+                className={`px-2.5 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition-colors ${
                   viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs border border-slate-300' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -540,6 +483,75 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
                 <span>Cards</span>
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Row 2: Distress Urgency Index Administrative Triage Filter */}
+        <div className="pt-2.5 border-t border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 text-slate-600 font-semibold text-[11px]">
+            <span className="text-slate-800 uppercase tracking-wider font-bold">Distress Index:</span>
+            <span>Automated PHQ/PoA Speech Assessment</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              onClick={() => setFilterType('all')}
+              className={`px-2.5 py-1 rounded text-xs transition-colors border ${
+                filterType === 'all'
+                  ? 'bg-[#0B2545] text-white border-[#0B2545] font-bold shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              All Cases ({cases.length})
+            </button>
+
+            <button
+              onClick={() => setFilterType(filterType === 'model_low' ? 'all' : 'model_low')}
+              className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
+                filterType === 'model_low'
+                  ? 'bg-emerald-800 text-white border-emerald-800 font-bold'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${filterType === 'model_low' ? 'bg-white' : 'bg-emerald-600'}`} />
+              <span>0–34 Low ({lowModelCases.length})</span>
+            </button>
+
+            <button
+              onClick={() => setFilterType(filterType === 'model_moderate' ? 'all' : 'model_moderate')}
+              className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
+                filterType === 'model_moderate'
+                  ? 'bg-slate-700 text-white border-slate-700 font-bold'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${filterType === 'model_moderate' ? 'bg-white' : 'bg-slate-500'}`} />
+              <span>35–54 Moderate ({moderateModelCases.length})</span>
+            </button>
+
+            <button
+              onClick={() => setFilterType(filterType === 'model_high' ? 'all' : 'model_high')}
+              className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
+                filterType === 'model_high'
+                  ? 'bg-amber-700 text-white border-amber-700 font-bold'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${filterType === 'model_high' ? 'bg-white' : 'bg-amber-500'}`} />
+              <span>55–74 High ({highModelCases.length})</span>
+            </button>
+
+            <button
+              onClick={() => setFilterType(filterType === 'model_critical' ? 'all' : 'model_critical')}
+              className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
+                filterType === 'model_critical'
+                  ? 'bg-red-700 text-white border-red-700 font-bold'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${filterType === 'model_critical' ? 'bg-white' : 'bg-red-600'}`} />
+              <span>75–100 Critical ({criticalModelCases.length})</span>
+            </button>
           </div>
         </div>
       </LiquidGlassContainer>

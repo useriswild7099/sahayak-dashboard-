@@ -16,8 +16,6 @@ import {
   Eye,
   Phone,
   FileCheck,
-  Droplets,
-  Sparkles,
 } from 'lucide-react';
 import { AtrocityCase, LanguageCode } from '../types/ivr';
 import { useLanguage } from '../context/LanguageContext';
@@ -91,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     toggleHighContrast,
     openAccessibilityModal,
   } = useAccessibility();
-  const { config: glassConfig, openSettings: openGlassSettings } = useLiquidGlass();
+  const { config: glassConfig } = useLiquidGlass();
 
   // Compute lapsed contacts (> 14 days)
   const today = new Date().toISOString().split('T')[0];
@@ -221,23 +219,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <SlidersHorizontal className="w-3 h-3 text-blue-200" />
                 <span>Accessibility</span>
-              </button>
-
-              <span className="text-white/20 mx-1" aria-hidden="true">|</span>
-
-              {/* Liquid Glass UI Engine Control (dashersw/liquid-glass-js) */}
-              <button
-                onClick={openGlassSettings}
-                title="Liquid Glass UI Engine (dashersw/liquid-glass-js) — Adjust refraction & shaders"
-                aria-label="Configure Liquid Glass Shaders"
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all flex items-center gap-1 border shadow-xs ${
-                  glassConfig.enabled
-                    ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
-                    : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
-                }`}
-              >
-                <Droplets className="w-3 h-3 text-cyan-300" />
-                <span>Liquid Glass {glassConfig.enabled ? 'ON' : 'OFF'}</span>
               </button>
             </div>
           </div>
