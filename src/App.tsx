@@ -13,6 +13,8 @@ import { therapyModelService } from './services/therapyModelService';
 import { AtrocityCase, CheckInRecord } from './types/ivr';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AccessibilityProvider, useAccessibility } from './context/AccessibilityContext';
+import { LiquidGlassProvider } from './context/LiquidGlassContext';
+import { LiquidGlassSettingsModal } from './components/liquid-glass/LiquidGlassSettingsModal';
 
 function AppContent() {
   const { t } = useLanguage();
@@ -170,6 +172,9 @@ function AppContent() {
       {/* GIGW 3.0 Universal Accessibility Center Modal */}
       <AccessibilityModal />
 
+      {/* Apple Liquid Glass Parameters Studio Modal (dashersw/liquid-glass-js) */}
+      <LiquidGlassSettingsModal />
+
       {/* Institutional Government Footer */}
       <footer className="border-t border-slate-200 bg-white py-6 text-xs text-slate-600" role="contentinfo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
@@ -209,7 +214,9 @@ export default function App() {
   return (
     <LanguageProvider>
       <AccessibilityProvider>
-        <AppContent />
+        <LiquidGlassProvider>
+          <AppContent />
+        </LiquidGlassProvider>
       </AccessibilityProvider>
     </LanguageProvider>
   );

@@ -11,12 +11,21 @@ export const EthicalCharterModal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'reality_check' | 'field_problems' | 'sahayak_solution' | 'litmus_test'>('reality_check');
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+      {/* Government Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium" aria-label="Breadcrumb">
+        <span className="text-slate-700">MoSJE Central</span>
+        <span aria-hidden="true">/</span>
+        <span className="text-slate-700">Governance &amp; Oversight</span>
+        <span aria-hidden="true">/</span>
+        <span className="text-slate-900 font-semibold">Section 15A Public Architecture &amp; Anti-Surveillance Charter</span>
+      </nav>
+
       {/* Statutory Header */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+      <div className="bg-white border border-slate-300 rounded p-4 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-3.5">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-slate-800 shrink-0">
+            <div className="w-10 h-10 rounded bg-[#0B2545] text-amber-300 flex items-center justify-center shrink-0">
               <Scale className="w-5 h-5" />
             </div>
             <div>
@@ -31,20 +40,20 @@ export const EthicalCharterModal: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-xs text-slate-600 bg-slate-50 border border-slate-200 px-3 py-2 rounded max-w-sm">
+          <div className="text-xs text-slate-600 bg-slate-50 border border-slate-300 px-3 py-2 rounded max-w-sm">
             <span className="text-slate-900 block font-semibold">Statutory Guiding Principle:</span>
             Survivor welfare must deliver statutory Section 15A entitlements—not punitive psychological surveillance.
           </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation (Clean Government Underline / Segmented Tabs) */}
         <div className="flex flex-wrap gap-1 text-xs">
           <button
             onClick={() => setActiveTab('reality_check')}
             className={`px-3 py-1.5 rounded transition-colors font-medium border ${
               activeTab === 'reality_check'
-                ? 'bg-[#0B2545] text-white border-[#0B2545] font-semibold'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                ? 'bg-[#0B2545] text-white border-[#0B2545] font-bold shadow-xs'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
             1. Problem Statement Critique
@@ -53,8 +62,8 @@ export const EthicalCharterModal: React.FC = () => {
             onClick={() => setActiveTab('field_problems')}
             className={`px-3 py-1.5 rounded transition-colors font-medium border ${
               activeTab === 'field_problems'
-                ? 'bg-[#0B2545] text-white border-[#0B2545] font-semibold'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                ? 'bg-[#0B2545] text-white border-[#0B2545] font-bold shadow-xs'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
             2. Ground Field Realities
@@ -63,8 +72,8 @@ export const EthicalCharterModal: React.FC = () => {
             onClick={() => setActiveTab('sahayak_solution')}
             className={`px-3 py-1.5 rounded transition-colors font-medium border ${
               activeTab === 'sahayak_solution'
-                ? 'bg-[#0B2545] text-white border-[#0B2545] font-semibold'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                ? 'bg-[#0B2545] text-white border-[#0B2545] font-bold shadow-xs'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
             3. Sahayak Operational Fix
@@ -73,8 +82,8 @@ export const EthicalCharterModal: React.FC = () => {
             onClick={() => setActiveTab('litmus_test')}
             className={`px-3 py-1.5 rounded transition-colors font-medium border ${
               activeTab === 'litmus_test'
-                ? 'bg-[#0B2545] text-white border-[#0B2545] font-semibold'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                ? 'bg-[#0B2545] text-white border-[#0B2545] font-bold shadow-xs'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
             4. Five Public Impact Litmus Tests
@@ -171,14 +180,14 @@ export const EthicalCharterModal: React.FC = () => {
 
       {/* Tab 2: Field Realities */}
       {activeTab === 'field_problems' && (
-        <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4 text-xs">
+        <div className="bg-white border border-slate-300 rounded p-4 space-y-4 text-xs">
           <h2 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-2">
             <Building className="w-4 h-4 text-[#0B2545]" />
             <span>Field Reality: Why Atrocity Survivors Fall Through the Cracks in India</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded bg-slate-50 border border-slate-200 space-y-2">
+            <div className="p-3.5 rounded bg-slate-50 border border-slate-300 space-y-2">
               <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-red-600 shrink-0" />
                 <span>1. Witness Intimidation &amp; Isolation</span>
@@ -188,7 +197,7 @@ export const EthicalCharterModal: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded bg-slate-50 border border-slate-200 space-y-2">
+            <div className="p-3.5 rounded bg-slate-50 border border-slate-300 space-y-2">
               <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0" />
                 <span>2. Unpaid Section 15A Relief</span>
@@ -198,7 +207,7 @@ export const EthicalCharterModal: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded bg-slate-50 border border-slate-200 space-y-2">
+            <div className="p-3.5 rounded bg-slate-50 border border-slate-300 space-y-2">
               <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
                 <span>3. Language &amp; Dialect Barriers</span>
@@ -213,14 +222,14 @@ export const EthicalCharterModal: React.FC = () => {
 
       {/* Tab 3: Sahayak Solution */}
       {activeTab === 'sahayak_solution' && (
-        <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4 text-xs">
+        <div className="bg-white border border-slate-300 rounded p-4 space-y-4 text-xs">
           <h2 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-2">
             <Target className="w-4 h-4 text-emerald-700" />
             <span>How MoSJE Sahayak Operates in Real District Environments</span>
           </h2>
 
           <div className="space-y-3 text-slate-700 leading-relaxed">
-            <div className="flex items-start gap-3 p-3.5 rounded bg-slate-50 border border-slate-200">
+            <div className="flex items-start gap-3 p-3.5 rounded bg-slate-50 border border-slate-300">
               <div className="w-6 h-6 rounded bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs shrink-0 font-mono">
                 1
               </div>
@@ -232,7 +241,7 @@ export const EthicalCharterModal: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3.5 rounded bg-slate-50 border border-slate-200">
+            <div className="flex items-start gap-3 p-3.5 rounded bg-slate-50 border border-slate-300">
               <div className="w-6 h-6 rounded bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs shrink-0 font-mono">
                 2
               </div>
@@ -244,7 +253,7 @@ export const EthicalCharterModal: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3.5 rounded bg-slate-50 border border-slate-200">
+            <div className="flex items-start gap-3 p-3.5 rounded bg-slate-50 border border-slate-300">
               <div className="w-6 h-6 rounded bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs shrink-0 font-mono">
                 3
               </div>
@@ -261,74 +270,74 @@ export const EthicalCharterModal: React.FC = () => {
 
       {/* Tab 4: 5 Public Impact Litmus Tests */}
       {activeTab === 'litmus_test' && (
-        <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
+        <div className="bg-white border border-slate-300 rounded p-4 space-y-3 text-xs">
           <h2 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-[#0B2545]" />
             <span>The Five Public Impact Litmus Tests</span>
           </h2>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse border border-slate-200">
+            <table className="w-full text-left border-collapse border border-slate-300 text-xs">
               <thead>
-                <tr className="bg-slate-50 text-slate-800 text-[11px] font-semibold uppercase">
-                  <th className="p-3 border border-slate-200">Evaluation Criterion</th>
-                  <th className="p-3 border border-slate-200">Naive AI Surveillance Model</th>
-                  <th className="p-3 border border-slate-200">MoSJE Sahayak Architecture</th>
+                <tr className="bg-slate-100 text-slate-900 text-[11px] font-bold uppercase tracking-wider">
+                  <th className="p-3 border border-slate-300">Evaluation Criterion</th>
+                  <th className="p-3 border border-slate-300">Naive AI Surveillance Model</th>
+                  <th className="p-3 border border-slate-300">MoSJE Sahayak Architecture</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 text-slate-700">
                 <tr>
-                  <td className="p-3 font-semibold text-slate-900 border border-slate-200">
+                  <td className="p-3 font-semibold text-slate-900 border border-slate-300">
                     1. Will a rural tribal survivor actually use it?
                   </td>
-                  <td className="p-3 text-red-800 bg-red-50/40 border border-slate-200">
+                  <td className="p-3 text-red-900 bg-red-50/50 border border-slate-300">
                     No. Requires smartphone, high-speed data, and digital literacy.
                   </td>
-                  <td className="p-3 text-emerald-900 bg-emerald-50/40 border border-slate-200 font-medium">
+                  <td className="p-3 text-emerald-950 bg-emerald-50/50 border border-slate-300 font-medium">
                     Yes. Operates over regular incoming voice calls on any ₹800 feature phone in 9 local languages.
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-semibold text-slate-900 border border-slate-200">
+                  <td className="p-3 font-semibold text-slate-900 border border-slate-300">
                     2. Does it mitigate witness intimidation?
                   </td>
-                  <td className="p-3 text-red-800 bg-red-50/40 border border-slate-200">
+                  <td className="p-3 text-red-900 bg-red-50/50 border border-slate-300">
                     No. Displays an ungrounded clinical score without alerting police.
                   </td>
-                  <td className="p-3 text-emerald-900 bg-emerald-50/40 border border-slate-200 font-medium">
+                  <td className="p-3 text-emerald-950 bg-emerald-50/50 border border-slate-300 font-medium">
                     Yes. Directly captures threats and triggers an immediate Section 15A protection flag for the caseworker.
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-semibold text-slate-900 border border-slate-200">
+                  <td className="p-3 font-semibold text-slate-900 border border-slate-300">
                     3. Does it hold the state accountable?
                   </td>
-                  <td className="p-3 text-red-800 bg-red-50/40 border border-slate-200">
+                  <td className="p-3 text-red-900 bg-red-50/50 border border-slate-300">
                     No. Monitors the victim&apos;s mental state rather than official follow-up.
                   </td>
-                  <td className="p-3 text-emerald-900 bg-emerald-50/40 border border-slate-200 font-medium">
+                  <td className="p-3 text-emerald-950 bg-emerald-50/50 border border-slate-300 font-medium">
                     Yes. Flags caseworkers when contact has lapsed (&gt;14 days) or statutory compensation is delayed.
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-semibold text-slate-900 border border-slate-200">
+                  <td className="p-3 font-semibold text-slate-900 border border-slate-300">
                     4. Can the model be audited for algorithmic bias?
                   </td>
-                  <td className="p-3 text-red-800 bg-red-50/40 border border-slate-200">
+                  <td className="p-3 text-red-900 bg-red-50/50 border border-slate-300">
                     No. Proprietary opaque predictions.
                   </td>
-                  <td className="p-3 text-emerald-900 bg-emerald-50/40 border border-slate-200 font-medium">
+                  <td className="p-3 text-emerald-950 bg-emerald-50/50 border border-slate-300 font-medium">
                     Yes. Complete explainability displaying detected indicators and trigger tokens with confidence metrics.
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-semibold text-slate-900 border border-slate-200">
+                  <td className="p-3 font-semibold text-slate-900 border border-slate-300">
                     5. Does the citizen retain agency &amp; privacy?
                   </td>
-                  <td className="p-3 text-red-800 bg-red-50/40 border border-slate-200">
+                  <td className="p-3 text-red-900 bg-red-50/50 border border-slate-300">
                     No. Mandatory background monitoring without consent controls.
                   </td>
-                  <td className="p-3 text-emerald-900 bg-emerald-50/40 border border-slate-200 font-medium">
+                  <td className="p-3 text-emerald-950 bg-emerald-50/50 border border-slate-300 font-medium">
                     Yes. Dedicated statutory privacy portal, safe-timing preference, and one-click consent pause.
                   </td>
                 </tr>

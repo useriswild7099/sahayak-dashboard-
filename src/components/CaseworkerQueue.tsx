@@ -26,6 +26,8 @@ import { ScheduledBatchRunnerModal } from './ScheduledBatchRunnerModal';
 import { ModelIntegrationModal } from './ModelIntegrationModal';
 import { therapyModelService } from '../services/therapyModelService';
 import { useLanguage } from '../context/LanguageContext';
+import { LiquidGlassContainer } from './liquid-glass/LiquidGlassContainer';
+import { LiquidGlassButton } from './liquid-glass/LiquidGlassButton';
 
 export interface DistressUrgencyConfig {
   tier: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
@@ -114,7 +116,7 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
   onOpenCaseDetail,
 }) => {
   const { t, tNeed, tTier } = useLanguage();
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [filterType, setFilterType] = useState<
     | 'all'
     | 'lapsed'
@@ -256,136 +258,141 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+      {/* Government Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium" aria-label="Breadcrumb">
+        <span className="text-slate-700">MoSJE Central</span>
+        <span aria-hidden="true">/</span>
+        <span className="text-slate-700">District Welfare Cell</span>
+        <span aria-hidden="true">/</span>
+        <span className="text-slate-900 font-semibold">Section 15A Witness Protection Triage Register</span>
+      </nav>
+
       {/* Toast Feedback */}
       {feedbackToast && (
         <div
           role="status"
-          className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded shadow-lg flex items-center gap-2 border border-slate-700"
+          className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded border border-slate-700 shadow-md flex items-center gap-2"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{feedbackToast}</span>
         </div>
       )}
 
-      {/* Institutional Header & Action Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+      {/* Institutional Header & Action Bar with Liquid Glass */}
+      <LiquidGlassContainer borderRadius={12} className="p-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 pb-3.5">
           <div>
-            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-              <span className="font-semibold text-slate-900">District Welfare Cell</span>
+            <div className="flex items-center gap-2 text-[11px] text-slate-600 font-semibold uppercase tracking-wider">
+              <span>District Welfare Administration</span>
               <span aria-hidden="true">·</span>
-              <span>Section 15A Witness Protection Triage</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums text-slate-700">{cases.length} Beneficiaries Registered</span>
+              <span className="font-mono tabular-nums text-slate-800">{cases.length} Beneficiaries on Record</span>
             </div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight mt-1">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mt-0.5">
               {t('queueTitle')}
             </h1>
-            <p className="text-xs text-slate-600 mt-1 max-w-3xl leading-relaxed">
+            <p className="text-xs text-slate-600 mt-0.5 max-w-3xl">
               {t('queueSubtitle')}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             {/* Model Hub Action */}
-            <button
+            <LiquidGlassButton
+              variant="secondary"
+              size="md"
               onClick={() => setShowModelModal(true)}
-              className="px-3 py-1.5 rounded bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
+              icon={<Cpu className="w-3.5 h-3.5 text-slate-600" />}
             >
-              <Cpu className="w-3.5 h-3.5 text-slate-600" />
-              <span>{t('modelSettingsBtn')}</span>
-            </button>
+              {t('modelSettingsBtn')}
+            </LiquidGlassButton>
 
             {/* Scheduled Batch Runner */}
-            <button
+            <LiquidGlassButton
+              variant="primary"
+              size="md"
               onClick={() => setShowBatchRunner(true)}
-              className="px-3 py-1.5 rounded bg-[#0B2545] hover:bg-[#12335C] text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-xs"
+              icon={<Play className="w-3.5 h-3.5 text-amber-300" />}
             >
-              <Play className="w-3.5 h-3.5 text-amber-300" />
-              <span>{t('batchRunnerBtn')}</span>
-            </button>
+              {t('batchRunnerBtn')}
+            </LiquidGlassButton>
           </div>
         </div>
 
-        {/* 4 Quantitative Rigor Triage Metric Counters (Clean Institutional Style) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <div
-            onClick={() => setFilterType('model_critical')}
-            className={`p-3.5 rounded border transition-colors cursor-pointer ${
-              filterType === 'model_critical'
-                ? 'bg-red-50/50 border-red-400'
-                : 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
+        {/* 4 Quantitative Rigor Triage Metric Counters (Liquid Glass Tiles) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-3.5">
+          <LiquidGlassContainer
+            borderRadius={10}
+            onClick={() => setFilterType(filterType === 'model_critical' ? 'all' : 'model_critical')}
+            className={`p-3 transition-all cursor-pointer border-t-4 border-t-red-600 ${
+              filterType === 'model_critical' ? 'ring-2 ring-red-500/50' : ''
             }`}
           >
-            <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
-              <span className="text-red-700 font-bold uppercase tracking-wider">{t('tierCritical')} (≥75)</span>
+            <div className="text-[11px] font-bold text-red-800 uppercase tracking-wider flex items-center justify-between">
+              <span>{t('tierCritical')} (≥75)</span>
               <span className="w-2 h-2 rounded-full bg-red-600" />
             </div>
-            <div className="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">
+            <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5 tabular-nums">
               {criticalModelCases.length}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">High clinical distress priority</p>
-          </div>
+            <p className="text-[11px] text-slate-600 mt-0.5">High clinical distress priority</p>
+          </LiquidGlassContainer>
 
-          <div
-            onClick={() => setFilterType('lapsed')}
-            className={`p-3.5 rounded border transition-colors cursor-pointer ${
-              filterType === 'lapsed'
-                ? 'bg-amber-50/50 border-amber-400'
-                : 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
+          <LiquidGlassContainer
+            borderRadius={10}
+            onClick={() => setFilterType(filterType === 'lapsed' ? 'all' : 'lapsed')}
+            className={`p-3 transition-all cursor-pointer border-t-4 border-t-amber-600 ${
+              filterType === 'lapsed' ? 'ring-2 ring-amber-500/50' : ''
             }`}
           >
-            <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
-              <span className="text-amber-800 font-bold uppercase tracking-wider">{t('statLapsed')} (&gt;14d)</span>
+            <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center justify-between">
+              <span>{t('statLapsed')} (&gt;14d)</span>
               <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
             </div>
-            <div className="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">
+            <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5 tabular-nums">
               {lapsedCases.length}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Mandatory follow-up overdue</p>
-          </div>
+            <p className="text-[11px] text-slate-600 mt-0.5">Follow-up overdue</p>
+          </LiquidGlassContainer>
 
-          <div
-            onClick={() => setFilterType('urgent_requests')}
-            className={`p-3.5 rounded border transition-colors cursor-pointer ${
-              filterType === 'urgent_requests'
-                ? 'bg-amber-50/50 border-amber-400'
-                : 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
+          <LiquidGlassContainer
+            borderRadius={10}
+            onClick={() => setFilterType(filterType === 'urgent_requests' ? 'all' : 'urgent_requests')}
+            className={`p-3 transition-all cursor-pointer border-t-4 border-t-slate-600 ${
+              filterType === 'urgent_requests' ? 'ring-2 ring-slate-500/50' : ''
             }`}
           >
-            <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
-              <span className="text-slate-700 font-bold uppercase tracking-wider">{t('statEntitlements')}</span>
+            <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+              <span>{t('statEntitlements')}</span>
               <AlertTriangle className="w-3.5 h-3.5 text-slate-600" />
             </div>
-            <div className="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">
+            <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5 tabular-nums">
               {urgentCases.length}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Pending relief or protection</p>
-          </div>
+            <p className="text-[11px] text-slate-600 mt-0.5">Pending relief or protection</p>
+          </LiquidGlassContainer>
 
-          <div
-            onClick={() => setFilterType('due_today')}
-            className={`p-3.5 rounded border transition-colors cursor-pointer ${
-              filterType === 'due_today'
-                ? 'bg-blue-50/50 border-blue-400'
-                : 'bg-slate-50/50 border-slate-200 hover:border-slate-300'
+          <LiquidGlassContainer
+            borderRadius={10}
+            onClick={() => setFilterType(filterType === 'due_today' ? 'all' : 'due_today')}
+            className={`p-3 transition-all cursor-pointer border-t-4 border-t-[#0B2545] ${
+              filterType === 'due_today' ? 'ring-2 ring-[#0B2545]/50' : ''
             }`}
           >
-            <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
-              <span className="text-[#0B2545] font-bold uppercase tracking-wider">{t('today')}</span>
+            <div className="text-[11px] font-bold text-[#0B2545] uppercase tracking-wider flex items-center justify-between">
+              <span>{t('today')}</span>
               <Calendar className="w-3.5 h-3.5 text-[#0B2545]" />
             </div>
-            <div className="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">
+            <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5 tabular-nums">
               {dueTodayCases.length}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Due for scheduled call</p>
-          </div>
+            <p className="text-[11px] text-slate-600 mt-0.5">Scheduled contacts</p>
+          </LiquidGlassContainer>
         </div>
-      </div>
+      </LiquidGlassContainer>
 
-      {/* Clinical Urgency Thresholds Selector */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+      {/* Clinical Urgency Thresholds Selector (Minimalist Horizontal Strip) */}
+      <div className="bg-white border border-slate-300 rounded p-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 text-xs">
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-800">Distress Urgency Index:</span>
           <span className="text-slate-500 text-[11px] hidden sm:inline">(Automated PHQ/PoA Speech Assessment)</span>
@@ -393,162 +400,173 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
 
         <div className="flex flex-wrap items-center gap-1.5">
           <button
+            onClick={() => setFilterType('all')}
+            className={`px-2.5 py-1 rounded-sm text-xs transition-colors border ${
+              filterType === 'all'
+                ? 'bg-slate-800 text-white border-slate-800 font-bold'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+            }`}
+          >
+            All Cases ({cases.length})
+          </button>
+
+          <button
             onClick={() => setFilterType(filterType === 'model_low' ? 'all' : 'model_low')}
-            className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
+            className={`px-2.5 py-1 rounded-sm text-xs transition-colors flex items-center gap-1.5 border ${
               filterType === 'model_low'
-                ? 'bg-emerald-700 text-white border-emerald-700 font-bold'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                ? 'bg-emerald-800 text-white border-emerald-800 font-bold'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${filterType === 'model_low' ? 'bg-white' : 'bg-emerald-600'}`} />
-            <span>0–34 Low</span>
-            <span className="font-mono tabular-nums opacity-80">({lowModelCases.length})</span>
+            <span>0–34 Low ({lowModelCases.length})</span>
           </button>
 
           <button
             onClick={() => setFilterType(filterType === 'model_moderate' ? 'all' : 'model_moderate')}
-            className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
+            className={`px-2.5 py-1 rounded-sm text-xs transition-colors flex items-center gap-1.5 border ${
               filterType === 'model_moderate'
-                ? 'bg-slate-800 text-white border-slate-800 font-bold'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                ? 'bg-slate-700 text-white border-slate-700 font-bold'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${filterType === 'model_moderate' ? 'bg-white' : 'bg-slate-500'}`} />
-            <span>35–54 Moderate</span>
-            <span className="font-mono tabular-nums opacity-80">({moderateModelCases.length})</span>
+            <span>35–54 Moderate ({moderateModelCases.length})</span>
           </button>
 
           <button
             onClick={() => setFilterType(filterType === 'model_high' ? 'all' : 'model_high')}
-            className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
+            className={`px-2.5 py-1 rounded-sm text-xs transition-colors flex items-center gap-1.5 border ${
               filterType === 'model_high'
                 ? 'bg-amber-700 text-white border-amber-700 font-bold'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${filterType === 'model_high' ? 'bg-white' : 'bg-amber-500'}`} />
-            <span>55–74 High</span>
-            <span className="font-mono tabular-nums opacity-80">({highModelCases.length})</span>
+            <span>55–74 High ({highModelCases.length})</span>
           </button>
 
           <button
             onClick={() => setFilterType(filterType === 'model_critical' ? 'all' : 'model_critical')}
-            className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
+            className={`px-2.5 py-1 rounded-sm text-xs transition-colors flex items-center gap-1.5 border ${
               filterType === 'model_critical'
                 ? 'bg-red-700 text-white border-red-700 font-bold'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${filterType === 'model_critical' ? 'bg-white' : 'bg-red-600'}`} />
-            <span>75–100 Critical</span>
-            <span className="font-mono tabular-nums opacity-80">({criticalModelCases.length})</span>
+            <span>75–100 Critical ({criticalModelCases.length})</span>
           </button>
         </div>
       </div>
 
       {/* Filter, Search & View Mode Controls Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3.5 flex flex-wrap items-center justify-between gap-3">
-        {/* Search Input */}
-        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded border border-slate-300 flex-1 min-w-[220px]">
-          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('searchPlaceholder')}
-            className="bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none w-full"
-          />
-        </div>
+      <LiquidGlassContainer borderRadius={10} className="p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs">
+          {/* Search Input */}
+          <div className="flex items-center gap-2 bg-white/90 px-2.5 py-1.5 rounded border border-slate-300 flex-1 min-w-[200px]">
+            <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              className="bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none w-full"
+            />
+          </div>
 
-        {/* Dropdowns */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          {/* Dropdowns */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <select
+                value={districtFilter}
+                onChange={(e) => setDistrictFilter(e.target.value)}
+                className="bg-white/90 text-xs text-slate-800 border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
+              >
+                <option value="ALL">{t('district')} (All {cases.length})</option>
+                {uniqueDistricts.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <select
-              value={districtFilter}
-              onChange={(e) => setDistrictFilter(e.target.value)}
-              className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500"
+              value={channelFilter}
+              onChange={(e) => setChannelFilter(e.target.value)}
+              className="bg-white/90 text-xs text-slate-800 border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
             >
-              <option value="ALL">{t('district')} (All {cases.length})</option>
-              {uniqueDistricts.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
+              <option value="ALL">{t('filterChannelAll')}</option>
+              <option value="IVR_VOICE">IVR Voice Call</option>
+              <option value="FEATURE_PHONE_SMS">Feature-Phone SMS</option>
             </select>
-          </div>
 
-          <select
-            value={channelFilter}
-            onChange={(e) => setChannelFilter(e.target.value)}
-            className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500"
-          >
-            <option value="ALL">{t('filterChannelAll')}</option>
-            <option value="IVR_VOICE">IVR Voice Call</option>
-            <option value="FEATURE_PHONE_SMS">Feature-Phone SMS</option>
-          </select>
+            <div className="flex items-center gap-1.5">
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-white/90 text-xs text-slate-800 border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
+              >
+                <option value="distress_desc">Highest Distress First</option>
+                <option value="distress_asc">Lowest Distress First</option>
+                <option value="urgency">Self-Reported Urgency</option>
+                <option value="due_date">Scheduled Due Date</option>
+              </select>
+            </div>
 
-          <div className="flex items-center gap-1.5">
-            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-white text-xs text-slate-800 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-slate-500 font-medium"
-            >
-              <option value="distress_desc">Highest Distress First</option>
-              <option value="distress_asc">Lowest Distress First</option>
-              <option value="urgency">Self-Reported Urgency</option>
-              <option value="due_date">Scheduled Due Date</option>
-            </select>
-          </div>
-
-          {/* View Mode Toggle (Register Table vs Dossier Cards) */}
-          <div className="flex items-center border border-slate-300 rounded p-0.5 bg-slate-50">
-            <button
-              onClick={() => setViewMode('table')}
-              title="Switch to Register Table View"
-              className={`p-1.5 rounded transition-colors ${
-                viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Table className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode('cards')}
-              title="Switch to Case Dossier View"
-              className={`p-1.5 rounded transition-colors ${
-                viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
+            {/* View Mode Toggle (Register Table vs Dossier Cards) */}
+            <div className="flex items-center border border-slate-300 rounded p-0.5 bg-slate-100/80">
+              <button
+                onClick={() => setViewMode('table')}
+                title="Switch to Register Table View"
+                className={`px-2 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition-colors ${
+                  viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs border border-slate-300' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Table className="w-3.5 h-3.5" />
+                <span>Register</span>
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                title="Switch to Case Dossier View"
+                className={`px-2 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition-colors ${
+                  viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs border border-slate-300' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Cards</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </LiquidGlassContainer>
 
       {/* Results View: Either Table Register or Clean Dossier Cards */}
       {sortedCases.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-slate-200 rounded-lg text-slate-500 text-xs">
+        <div className="text-center py-16 bg-white border border-slate-300 rounded text-slate-500 text-xs">
           No records match the current filter criteria.
         </div>
       ) : viewMode === 'table' ? (
-        /* HIGH DENSITY TRIAGE REGISTER TABLE VIEW */
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
+        /* HIGH DENSITY TRIAGE REGISTER TABLE VIEW (WITH LIQUID GLASS BACKDROP) */
+        <LiquidGlassContainer borderRadius={12} className="overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+              <thead className="bg-slate-100/90 border-b-2 border-slate-300 text-slate-800 uppercase font-bold text-[11px] tracking-wider">
                 <tr>
-                  <th className="py-3 px-4">Case ID</th>
-                  <th className="py-3 px-4">Beneficiary Pseudonym</th>
-                  <th className="py-3 px-4">District / State</th>
-                  <th className="py-3 px-4">Court &amp; Relief Stage</th>
-                  <th className="py-3 px-4">Recency</th>
-                  <th className="py-3 px-4">Distress Urgency</th>
-                  <th className="py-3 px-4">Pending Needs</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-2.5 px-3.5">Case ID</th>
+                  <th className="py-2.5 px-3.5">Beneficiary Pseudonym</th>
+                  <th className="py-2.5 px-3.5">District / State</th>
+                  <th className="py-2.5 px-3.5">Court &amp; Relief Stage</th>
+                  <th className="py-2.5 px-3.5">Recency</th>
+                  <th className="py-2.5 px-3.5">Distress Urgency</th>
+                  <th className="py-2.5 px-3.5">Pending Needs</th>
+                  <th className="py-2.5 px-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {sortedCases.map((c) => {
                   const daysSinceContact = getDaysSinceLastContact(c.lastContactDate);
                   const isLapsed = daysSinceContact > 14 && c.consentStatus !== 'opted_out';
@@ -556,43 +574,43 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
                   const scoreUrgency = modelRes ? getDistressUrgencyConfig(modelRes.distressScore) : null;
 
                   return (
-                    <tr key={c.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 px-4 font-mono font-semibold text-slate-900 tabular-nums">
+                    <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900 tabular-nums">
                         {c.id}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-900">{c.victimPseudonym}</div>
+                      <td className="py-2.5 px-3.5">
+                        <div className="font-bold text-slate-900">{c.victimPseudonym}</div>
                         <div className="text-[11px] text-slate-500 font-mono">{c.contactNumber}</div>
                       </td>
-                      <td className="py-3 px-4 text-slate-700">
-                        <div>{c.district}</div>
+                      <td className="py-2.5 px-3.5 text-slate-700">
+                        <div className="font-medium text-slate-900">{c.district}</div>
                         <div className="text-[11px] text-slate-500">{c.state}</div>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="text-slate-800 font-medium capitalize">
+                      <td className="py-2.5 px-3.5">
+                        <div className="text-slate-900 font-medium capitalize">
                           {c.courtStage.replace(/_/g, ' ')}
                         </div>
-                        <div className="text-[11px] text-slate-500 capitalize">
+                        <div className="text-[11px] text-slate-600 capitalize">
                           Relief: {c.reliefCompensationStage.replace(/_/g, ' ')}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="tabular-nums font-mono text-slate-800">
+                      <td className="py-2.5 px-3.5">
+                        <div className="tabular-nums font-mono text-slate-800 font-semibold">
                           {c.lastContactDate || 'None'}
                         </div>
-                        <div className={`text-[11px] ${isLapsed ? 'text-red-700 font-bold' : 'text-slate-500'}`}>
+                        <div className={`text-[11px] font-medium ${isLapsed ? 'text-red-700 font-bold' : 'text-slate-500'}`}>
                           {daysSinceContact === 999 ? 'No contact' : `${daysSinceContact}d ago`}
                           {isLapsed && ' (Lapsed)'}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3.5">
                         {modelRes && scoreUrgency ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <span className={`w-2 h-2 rounded-full ${scoreUrgency.dotClass}`} />
                             <span className="font-mono font-bold tabular-nums text-slate-900">
                               {modelRes.distressScore}/100
                             </span>
-                            <span className="text-[11px] text-slate-500">
+                            <span className="text-[11px] text-slate-600 font-semibold">
                               ({scoreUrgency.label})
                             </span>
                           </div>
@@ -600,21 +618,21 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
                           <span className="text-slate-400 text-[11px]">Pending</span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3.5">
                         {c.unresolvedNeeds.length > 0 ? (
-                          <span className="text-[11px] text-amber-800 font-medium">
+                          <span className="text-[11px] text-amber-900 font-medium bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
                             {c.unresolvedNeeds.map(getNeedLabel).join(', ')}
                           </span>
                         ) : (
                           <span className="text-slate-400 text-[11px]">None recorded</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-2.5 px-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => onOpenPhoneWithCase(c)}
                             title="Initiate IVR Call"
-                            className="px-2.5 py-1 rounded bg-[#0B2545] hover:bg-[#12335C] text-white text-[11px] font-medium flex items-center gap-1 transition-colors"
+                            className="px-2.5 py-1 rounded bg-[#0B2545] hover:bg-[#12335C] text-white text-[11px] font-semibold flex items-center gap-1 transition-colors border border-[#0B2545]"
                           >
                             <PhoneCall className="w-3 h-3 text-amber-300" />
                             <span>Call</span>
@@ -622,14 +640,14 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
                           <button
                             onClick={() => setCaseToSchedule(c)}
                             title="Schedule Check-In"
-                            className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition-colors"
+                            className="px-2.5 py-1 rounded bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-semibold transition-colors border border-slate-300"
                           >
                             Schedule
                           </button>
                           <button
                             onClick={() => onOpenCaseDetail(c)}
                             title="View Full Dossier"
-                            className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                            className="p-1 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-300"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
@@ -641,7 +659,7 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
               </tbody>
             </table>
           </div>
-        </div>
+        </LiquidGlassContainer>
       ) : (
         /* REFINED CASE DOSSIER CARDS VIEW (NO NESTED CARDS WITHIN CARDS) */
         <div className="space-y-3">
@@ -652,9 +670,10 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
             const scoreUrgency = modelRes ? getDistressUrgencyConfig(modelRes.distressScore) : null;
 
             return (
-              <div
+              <LiquidGlassContainer
                 key={c.id}
-                className={`bg-white border rounded-lg p-4 transition-colors ${
+                borderRadius={12}
+                className={`p-4 transition-all ${
                   scoreUrgency ? scoreUrgency.cardBorderClass : 'border-slate-200'
                 }`}
               >
@@ -821,7 +840,7 @@ export const CaseworkerQueue: React.FC<CaseworkerQueueProps> = ({
                     </div>
                   </div>
                 </div>
-              </div>
+              </LiquidGlassContainer>
             );
           })}
         </div>

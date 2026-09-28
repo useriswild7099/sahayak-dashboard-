@@ -251,6 +251,7 @@ class TherapyModelService {
   /**
    * Ingests a distress score and emotional indicators directly from the external
    * local PC chatbot or journaling companion project.
+   * Hardened with defensive boundary validation & clamping (Security & Hardening skill).
    */
   public ingestExternalScore(
     caseId: string,
@@ -264,32 +265,58 @@ class TherapyModelService {
       recommendedInterventions?: string[];
     }
   ): TherapyModelResult | null {
-    const c = storageService.getCaseById(caseId);
+    if (!caseId || typeof caseId !== 'string') return null;
+    const c = storageService.getCaseById(caseId.trim());
     if (!c) return null;
 
-    const computedTier: 'CRITICAL' | 'ELEVATED' | 'MODERATE' | 'LOW' =
-      riskTier ||
-      (distressScore >= 75 ? 'CRITICAL' : distressScore >= 50 ? 'ELEVATED' : distressScore >= 25 ? 'MODERATE' : 'LOW');
+    // Defensive clamping & NaN safety
+    const rawScore = typeof distressScore === 'number' ? distressScore : parseFloat(String(distressScore));
+    const safeScore = isNaN(rawScore) ? 50 : Math.max(0, Math.min(100, Math.round(rawScore)));
 
-    const result: TherapyModelResult = {
-      distressScore,
-      riskTier: computedTier,
-      confidence: 0.95,
-      detectedIndicators: metadata?.detectedIndicators || [
-        'Local PC Chatbot & Journaling Sentiment Ingestion',
-        metadata?.journalSnippet ? 'Diary Somatic Reflection' : 'Conversational Chatbot Distress Metric',
-      ],
-      extractedPhrases: metadata?.extractedPhrases || (metadata?.journalSnippet ? [metadata.journalSnippet.slice(0, 100)] : []),
-      recommendedInterventions: metadata?.recommendedInterventions || [
+    const validTiers = ['CRITICAL', 'ELEVATED', 'MODERATE', 'LOW'] as const;
+    const computedTier =
+      riskTier && validTiers.includes(riskTier)
+        ? riskTier
+        : safeScore >= 75
+        ? 'CRITICAL'
+        : safeScore >= 50
+        ? 'ELEVATED'
+        : safeScore >= 25
+        ? 'MODERATE'
+        : 'LOW';
+
+    // Sanitize metadata fields to prevent oversized payloads or memory exhaustion
+    const safeSourceProject = metadata?.sourceProject?.trim().slice(0, 80) || 'LOCAL_PC_CHATBOT_JOURNAL';
+    const safeSnippet = metadata?.journalSnippet?.trim().slice(0, 500) || '';
+    const safeIndicators = (metadata?.detectedIndicators || [
+      'Local PC Chatbot & Journaling Sentiment Ingestion',
+      safeSnippet ? 'Diary Somatic Reflection' : 'Conversational Chatbot Distress Metric',
+    ]).map((s) => String(s).trim().slice(0, 100));
+
+    const safePhrases = (metadata?.extractedPhrases || (safeSnippet ? [safeSnippet.slice(0, 120)] : [])).map((s) =>
+      String(s).trim().slice(0, 120)
+    );
+
+    const safeInterventions = (
+      metadata?.recommendedInterventions || [
         computedTier === 'CRITICAL'
           ? 'Immediate Welfare Officer follow-up & Section 15A Witness Protection Verification'
           : 'Continue scheduled bi-weekly check-in cadence',
-      ],
+      ]
+    ).map((s) => String(s).trim().slice(0, 160));
+
+    const result: TherapyModelResult = {
+      distressScore: safeScore,
+      riskTier: computedTier,
+      confidence: 0.95,
+      detectedIndicators: safeIndicators,
+      extractedPhrases: safePhrases,
+      recommendedInterventions: safeInterventions,
       analyzedAt: new Date().toISOString(),
-      modelSource: metadata?.sourceProject || 'LOCAL_PC_CHATBOT_JOURNAL',
+      modelSource: safeSourceProject,
     };
 
-    storageService.updateCaseRecord(caseId, { therapyModelResult: result });
+    storageService.updateCaseRecord(c.id, { therapyModelResult: result });
     this.notify();
     return result;
   }

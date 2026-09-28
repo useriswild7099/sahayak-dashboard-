@@ -16,10 +16,13 @@ import {
   Eye,
   Phone,
   FileCheck,
+  Droplets,
+  Sparkles,
 } from 'lucide-react';
 import { AtrocityCase, LanguageCode } from '../types/ivr';
 import { useLanguage } from '../context/LanguageContext';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { useLiquidGlass } from '../context/LiquidGlassContext';
 
 export type PortalRole = 'admin' | 'victim';
 export type AdminViewType = 'queue' | 'telephony' | 'companion_hub' | 'ethics';
@@ -88,6 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     toggleHighContrast,
     openAccessibilityModal,
   } = useAccessibility();
+  const { config: glassConfig, openSettings: openGlassSettings } = useLiquidGlass();
 
   // Compute lapsed contacts (> 14 days)
   const today = new Date().toISOString().split('T')[0];
@@ -100,7 +104,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   }).length;
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40" role="banner">
+    <header
+      className={`sticky top-0 z-40 transition-all duration-200 ${
+        glassConfig.enabled
+          ? 'bg-white/85 backdrop-blur-xl border-b border-white/40 shadow-sm'
+          : 'bg-white border-b border-slate-200'
+      }`}
+      role="banner"
+    >
       {/* Screen Reader Skip to Main Content Link (GIGW 3.0 Standard) */}
       <a
         href="#main-content"
@@ -211,6 +222,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <SlidersHorizontal className="w-3 h-3 text-blue-200" />
                 <span>Accessibility</span>
               </button>
+
+              <span className="text-white/20 mx-1" aria-hidden="true">|</span>
+
+              {/* Liquid Glass UI Engine Control (dashersw/liquid-glass-js) */}
+              <button
+                onClick={openGlassSettings}
+                title="Liquid Glass UI Engine (dashersw/liquid-glass-js) — Adjust refraction & shaders"
+                aria-label="Configure Liquid Glass Shaders"
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all flex items-center gap-1 border shadow-xs ${
+                  glassConfig.enabled
+                    ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                    : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+                }`}
+              >
+                <Droplets className="w-3 h-3 text-cyan-300" />
+                <span>Liquid Glass {glassConfig.enabled ? 'ON' : 'OFF'}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -220,7 +248,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-4">
         {/* Brand Zone */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded bg-[#0B2545] text-white flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded bg-[#0B2545] text-white flex items-center justify-center shrink-0">
             <PhoneCall className="w-4 h-4 text-amber-400" />
           </div>
           <div>
@@ -228,53 +256,63 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-base font-bold text-slate-900 tracking-tight">
                 {t('portalName')}
               </span>
-              <span className="text-xs text-slate-500 hidden sm:inline">
-                SC/ST PoA Statutory Platform
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider hidden sm:inline">
+                SC/ST PoA Central Platform
               </span>
             </div>
-            <p className="text-xs text-slate-500 line-clamp-1">
+            <p className="text-[11px] text-slate-500 line-clamp-1">
               {portalRole === 'admin'
-                ? 'District Welfare Officer Administration & Triage Console'
+                ? 'District Welfare Officer Administration & Witness Protection Console'
                 : 'Beneficiary Rights, Safe Preferences & Personal Case Space'}
             </p>
           </div>
         </div>
 
-        {/* Central Dedicated Portal / Role Switcher */}
-        <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-300">
+        {/* Central Dedicated Portal / Role Switcher (Liquid Glass Responsive Container) */}
+        <div
+          className={`flex items-center p-0.5 rounded transition-all duration-200 ${
+            glassConfig.enabled
+              ? 'bg-white/60 backdrop-blur-md border border-white/60 shadow-inner'
+              : 'bg-slate-100 rounded border border-slate-300'
+          }`}
+        >
           <button
             onClick={() => onSelectPortalRole('admin')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5 ${
+            className={`px-3 py-1 text-xs font-semibold rounded transition-all flex items-center gap-1.5 ${
               portalRole === 'admin'
-                ? 'bg-[#0B2545] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? glassConfig.enabled
+                  ? 'bg-[#0B2545] text-white shadow-md shadow-[#0B2545]/20 border border-white/20'
+                  : 'bg-[#0B2545] text-white shadow-xs'
+                : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
             <Building className="w-3.5 h-3.5" />
-            <span>District Officer Desk (Admin)</span>
+            <span>District Officer Desk</span>
           </button>
 
           <button
             onClick={() => onSelectPortalRole('victim')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5 ${
+            className={`px-3 py-1 text-xs font-semibold rounded transition-all flex items-center gap-1.5 ${
               portalRole === 'victim'
-                ? 'bg-emerald-800 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? glassConfig.enabled
+                  ? 'bg-emerald-800 text-white shadow-md shadow-emerald-900/20 border border-white/20'
+                  : 'bg-emerald-800 text-white shadow-xs'
+                : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
             <Shield className="w-3.5 h-3.5" />
-            <span>Beneficiary Portal (Survivor)</span>
+            <span>Beneficiary Portal</span>
           </button>
         </div>
 
         {/* Language Selection & Action Button */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded px-2.5 py-1 text-xs">
             <Globe className="w-3.5 h-3.5 text-slate-600 shrink-0" />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as LanguageCode)}
-              className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs font-medium text-slate-800 focus:outline-none cursor-pointer"
               title={`${t('selectLanguage')} (${currentLanguageOption.label})`}
             >
               {supportedLanguages.map((lang) => (
@@ -294,7 +332,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onOpenPhoneWithCase();
               }
             }}
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#0B2545] hover:bg-[#12335C] text-white transition-colors flex items-center gap-1.5 shadow-xs"
+            className="px-3 py-1 text-xs font-semibold rounded bg-[#0B2545] hover:bg-[#12335C] text-white transition-colors flex items-center gap-1.5 border border-[#0B2545]"
           >
             <PhoneForwarded className="w-3.5 h-3.5 text-amber-300" />
             <span className="hidden sm:inline">Telephony Simulator</span>
@@ -305,115 +343,115 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Secondary Sub-Bar for Admin Views (only shown when in Admin Mode) */}
       {portalRole === 'admin' ? (
-        <div className="bg-slate-50 border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-1.5">
+        <div className="bg-slate-100 border-t border-b border-slate-300 px-4 sm:px-6 lg:px-8 py-1">
           <div className="max-w-7xl mx-auto flex items-center justify-between text-xs">
             <nav className="flex items-center gap-1 overflow-x-auto" aria-label="Admin Navigation">
               <button
                 onClick={() => onSelectAdminView('queue')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   adminView === 'queue'
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-300 font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-slate-900 border border-slate-300 font-bold shadow-xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70 font-medium'
                 }`}
               >
                 <Users className="w-3.5 h-3.5 text-slate-700" />
-                <span>Triage Register &amp; Queue</span>
+                <span>Triage Register</span>
                 {lapsedCount > 0 && (
-                  <span className="text-[11px] font-mono text-red-700 font-bold tabular-nums">
-                    ({lapsedCount})
+                  <span className="text-[10px] font-mono bg-red-100 text-red-800 px-1.5 py-0.2 rounded font-bold tabular-nums">
+                    {lapsedCount} Lapsed
                   </span>
                 )}
               </button>
 
               <button
                 onClick={() => onSelectAdminView('telephony')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   adminView === 'telephony'
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-300 font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-slate-900 border border-slate-300 font-bold shadow-xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70 font-medium'
                 }`}
               >
                 <PhoneCall className="w-3.5 h-3.5 text-slate-700" />
-                <span>Telephony &amp; IVR Dispatch Console</span>
+                <span>Telephony Gateway</span>
               </button>
 
               <button
                 onClick={() => onSelectAdminView('companion_hub')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   adminView === 'companion_hub'
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-300 font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-slate-900 border border-slate-300 font-bold shadow-xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70 font-medium'
                 }`}
               >
                 <Server className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Local PC Chatbot &amp; Journal Bridge</span>
+                <span>PC Chatbot &amp; Journal Bridge</span>
               </button>
 
               <button
                 onClick={() => onSelectAdminView('ethics')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   adminView === 'ethics'
-                    ? 'bg-white text-slate-900 shadow-xs border border-slate-300 font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-slate-900 border border-slate-300 font-bold shadow-xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70 font-medium'
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-slate-700" />
-                <span>Statutory Standards Charter</span>
+                <span>Governance Charter</span>
               </button>
             </nav>
 
             <span className="text-[11px] text-slate-500 hidden md:inline font-mono">
-              Role: District Welfare Officer (Officer Clearance)
+              Authorized: District Welfare Officer
             </span>
           </div>
         </div>
       ) : (
         /* Secondary Sub-Bar for Victim Views (when in Beneficiary / Survivor Mode) */
-        <div className="bg-emerald-50/70 border-t border-emerald-200/80 px-4 sm:px-6 lg:px-8 py-1.5">
+        <div className="bg-emerald-50 border-t border-b border-emerald-200 px-4 sm:px-6 lg:px-8 py-1">
           <div className="max-w-7xl mx-auto flex items-center justify-between text-xs">
             <nav className="flex items-center gap-1 overflow-x-auto" aria-label="Beneficiary Navigation">
               <button
                 onClick={() => onSelectVictimView('rights')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   victimView === 'rights'
-                    ? 'bg-white text-emerald-950 shadow-xs border border-emerald-300 font-bold'
-                    : 'text-emerald-900/80 hover:text-emerald-950 hover:bg-emerald-100/50'
+                    ? 'bg-white text-emerald-950 border border-emerald-300 font-bold shadow-xs'
+                    : 'text-emerald-900 hover:text-emerald-950 hover:bg-emerald-100/60 font-medium'
                 }`}
               >
                 <FileCheck className="w-3.5 h-3.5 text-emerald-700" />
-                <span>1. Statutory Rights &amp; Relief Funds</span>
+                <span>1. Statutory Rights &amp; Relief</span>
               </button>
 
               <button
                 onClick={() => onSelectVictimView('preferences')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   victimView === 'preferences'
-                    ? 'bg-white text-emerald-950 shadow-xs border border-emerald-300 font-bold'
-                    : 'text-emerald-900/80 hover:text-emerald-950 hover:bg-emerald-100/50'
+                    ? 'bg-white text-emerald-950 border border-emerald-300 font-bold shadow-xs'
+                    : 'text-emerald-900 hover:text-emerald-950 hover:bg-emerald-100/60 font-medium'
                 }`}
               >
                 <Lock className="w-3.5 h-3.5 text-emerald-700" />
-                <span>2. Consent &amp; Safe Call Hours</span>
+                <span>2. Consent &amp; Safe Hours</span>
               </button>
 
               <button
                 onClick={() => onSelectVictimView('ledger')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   victimView === 'ledger'
-                    ? 'bg-white text-emerald-950 shadow-xs border border-emerald-300 font-bold'
-                    : 'text-emerald-900/80 hover:text-emerald-950 hover:bg-emerald-100/50'
+                    ? 'bg-white text-emerald-950 border border-emerald-300 font-bold shadow-xs'
+                    : 'text-emerald-900 hover:text-emerald-950 hover:bg-emerald-100/60 font-medium'
                 }`}
               >
                 <Eye className="w-3.5 h-3.5 text-emerald-700" />
-                <span>3. Transparent Case Ledger</span>
+                <span>3. Case Ledger (DPDP Act)</span>
               </button>
 
               <button
                 onClick={() => onSelectVictimView('phone')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   victimView === 'phone'
-                    ? 'bg-white text-emerald-950 shadow-xs border border-emerald-300 font-bold'
-                    : 'text-emerald-900/80 hover:text-emerald-950 hover:bg-emerald-100/50'
+                    ? 'bg-white text-emerald-950 border border-emerald-300 font-bold shadow-xs'
+                    : 'text-emerald-900 hover:text-emerald-950 hover:bg-emerald-100/60 font-medium'
                 }`}
               >
                 <Phone className="w-3.5 h-3.5 text-emerald-700" />
@@ -422,19 +460,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 onClick={() => onSelectVictimView('companion')}
-                className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                   victimView === 'companion'
-                    ? 'bg-white text-emerald-950 shadow-xs border border-emerald-300 font-bold'
-                    : 'text-emerald-900/80 hover:text-emerald-950 hover:bg-emerald-100/50'
+                    ? 'bg-white text-emerald-950 border border-emerald-300 font-bold shadow-xs'
+                    : 'text-emerald-900 hover:text-emerald-950 hover:bg-emerald-100/60 font-medium'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-emerald-700" />
-                <span>5. Local PC Chatbot &amp; Journaling Companion</span>
+                <span>5. Local PC Companion</span>
               </button>
             </nav>
 
             <span className="text-[11px] text-emerald-800 hidden md:inline font-mono">
-              Space: Beneficiary Personal Portal (DPDP Act Protected)
+              Statutory Agency: Citizen Self-Service
             </span>
           </div>
         </div>

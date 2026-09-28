@@ -4,6 +4,13 @@
   :root {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    color-scheme: light;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
   }
 
   code, kbd, samp, pre, .font-mono {
@@ -28,21 +35,47 @@ html.text-size-xlarge {
   font-size: 20px;
 }
 
+/* Official Government Utility Styles */
+.gov-border {
+  border: 1px solid #cbd5e1;
+}
+
+.gov-panel {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.gov-table th {
+  background-color: #f1f5f9;
+  border-bottom: 2px solid #94a3b8;
+  color: #1e293b;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+}
+
+.gov-table td {
+  border-bottom: 1px solid #e2e8f0;
+}
+
 /* High Contrast Mode (WCAG 2.1 AAA Compliant) */
 html.high-contrast-mode body {
   background-color: #030712 !important;
   color: #f9fafb !important;
 }
-html.high-contrast-mode .bg-white {
+html.high-contrast-mode .bg-white,
+html.high-contrast-mode .gov-panel {
   background-color: #0b0f19 !important;
   color: #f9fafb !important;
-  border-color: #4b5563 !important;
+  border-color: #64748b !important;
 }
 html.high-contrast-mode .bg-slate-50,
 html.high-contrast-mode .bg-slate-100 {
   background-color: #111827 !important;
   color: #f9fafb !important;
-  border-color: #4b5563 !important;
+  border-color: #64748b !important;
 }
 html.high-contrast-mode .text-slate-500,
 html.high-contrast-mode .text-slate-600 {
@@ -59,4 +92,20 @@ html.high-contrast-mode input:focus-visible,
 html.high-contrast-mode a:focus-visible {
   outline: 3px solid #facc15 !important;
   outline-offset: 2px !important;
+}
+
+/* Liquid Glass Optical Engine Styles (dashersw/liquid-glass-js inspired) */
+.liquid-glass-active {
+  backdrop-filter: blur(20px) saturate(180%) contrast(102%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) contrast(102%);
+}
+
+@keyframes liquid-sheen-shimmer {
+  0% { transform: translateX(-100%) rotate(25deg); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateX(250%) rotate(25deg); opacity: 0; }
+}
+
+.animate-liquid-sheen {
+  animation: liquid-sheen-shimmer 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }

@@ -17,6 +17,17 @@ export const AccessibilityModal: React.FC = () => {
 
   const { language } = useLanguage();
 
+  React.useEffect(() => {
+    if (!isAccessibilityModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeAccessibilityModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAccessibilityModalOpen, closeAccessibilityModal]);
+
   if (!isAccessibilityModalOpen) return null;
 
   return (

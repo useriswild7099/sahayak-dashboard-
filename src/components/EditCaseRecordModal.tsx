@@ -23,6 +23,16 @@ export const EditCaseRecordModal: React.FC<EditCaseRecordModalProps> = ({
   const [officerName, setOfficerName] = useState(atrocityCase.assignedCaseworker?.name || '');
   const [officerPhone, setOfficerPhone] = useState(atrocityCase.assignedCaseworker?.contactNumber || '');
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     storageService.updateCaseRecord(atrocityCase.id, {

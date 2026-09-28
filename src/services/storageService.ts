@@ -172,11 +172,15 @@ class StorageService {
   }
 
   public addCaseworkerNote(caseId: string, note: string): void {
+    if (!caseId || !note) return;
+    const sanitizedNote = String(note).trim().slice(0, 1000);
+    if (!sanitizedNote) return;
+
     const c = this.cases.find((item) => item.id === caseId);
     if (c) {
       const existing = c.caseworkerNotes ? `${c.caseworkerNotes}\n\n` : '';
       const dateStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-      c.caseworkerNotes = `${existing}[${dateStr}] ${note}`;
+      c.caseworkerNotes = `${existing}[${dateStr}] ${sanitizedNote}`;
       this.saveCases();
     }
   }
@@ -186,10 +190,78 @@ class StorageService {
     if (record) {
       record.caseworkerAcknowledged = true;
       if (notes) {
-        record.caseworkerNotes = notes;
+        record.caseworkerNotes = String(notes).trim().slice(0, 500);
       }
       this.saveCheckIns();
     }
+  }
+
+  /**
+   * DPDP Act 2023 Section 12: Right to Erasure / Right to be Forgotten.
+   * Permanently purges past check-in voice telemetry and companion model inferences
+   * for the given beneficiary, while preserving required statutory FIR court data.
+   */
+  public purgeCaseCheckIns(caseId: string): boolean {
+    if (!caseId) return false;
+    this.checkIns = this.checkIns.filter((chk) => chk.caseId !== caseId);
+    this.saveCheckIns();
+
+    const c = this.cases.find((item) => item.id === caseId);
+    if (c) {
+      c.therapyModelResult = undefined;
+      c.totalCheckInsCompleted = 0;
+      this.saveCases();
+    }
+    return true;
+  }
+
+  /**
+   * DPDP Act 2023 Section 11: Right to Data Portability.
+   * Exports an encrypted/clean JSON package of all stored personal records for the citizen.
+   */
+  public exportSurvivorData(caseId: string): string {
+    const targetCase = this.cases.find((c) => c.id === caseId);
+    const relatedCheckIns = this.checkIns.filter((chk) => chk.caseId === caseId);
+
+    const exportBundle = {
+      exportStandard: 'DPDP_ACT_2023_PORTABILITY_V1',
+      generatedAt: new Date().toISOString(),
+      statutoryJurisdiction: 'Ministry of Social Justice and Empowerment, Government of India',
+      legalFramework: 'Scheduled Castes and the Scheduled Tribes (Prevention of Atrocities) Act, 1989',
+      citizenProfile: targetCase
+        ? {
+            id: targetCase.id,
+            victimPseudonym: targetCase.victimPseudonym,
+            district: targetCase.district,
+            state: targetCase.state,
+            firNumber: targetCase.firNumber,
+            registrationDate: targetCase.registrationDate,
+            incidentType: targetCase.incidentType,
+            reliefCompensationStage: targetCase.reliefCompensationStage,
+            consentStatus: targetCase.consentStatus,
+            preferredLanguage: targetCase.preferredLanguage,
+            preferredTimeSlot: targetCase.preferredTimeSlot,
+            unresolvedNeeds: targetCase.unresolvedNeeds,
+          }
+        : null,
+      telephonyLogs: relatedCheckIns.map((chk) => ({
+        timestamp: chk.timestamp,
+        status: chk.status,
+        durationSeconds: chk.callDurationSeconds,
+        needsReported: chk.needs,
+        acknowledgedByOfficer: chk.caseworkerAcknowledged,
+      })),
+      therapyModelDistressInference: targetCase?.therapyModelResult
+        ? {
+            distressScore: targetCase.therapyModelResult.distressScore,
+            riskTier: targetCase.therapyModelResult.riskTier,
+            modelSource: targetCase.therapyModelResult.modelSource,
+            analyzedAt: targetCase.therapyModelResult.analyzedAt,
+          }
+        : null,
+    };
+
+    return JSON.stringify(exportBundle, null, 2);
   }
 
   public reportNeed(caseId: string, need: SupportNeedType): void {

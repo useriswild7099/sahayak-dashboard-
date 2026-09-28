@@ -19,6 +19,7 @@ import { IVRSessionState, LanguageCode, SUPPORTED_LANGUAGES, AtrocityCase, SMSMe
 import { IVR_SCRIPTS } from '../services/ivrScriptData';
 import { smsService } from '../services/smsService';
 import { useLanguage } from '../context/LanguageContext';
+import { LiquidGlassContainer } from './liquid-glass/LiquidGlassContainer';
 
 interface IVRPhoneSimulatorProps {
   cases: AtrocityCase[];
@@ -215,9 +216,18 @@ export const IVRPhoneSimulator: React.FC<IVRPhoneSimulatorProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+      {/* Government Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium" aria-label="Breadcrumb">
+        <span className="text-slate-700">MoSJE Central</span>
+        <span aria-hidden="true">/</span>
+        <span className="text-slate-700">Telephony Gateway</span>
+        <span aria-hidden="true">/</span>
+        <span className="text-slate-900 font-semibold">2G/4G Multilingual IVR &amp; SMS Dispatch Console</span>
+      </nav>
+
       {/* Top Telephony Context Header */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
+      <LiquidGlassContainer borderRadius={12} className="p-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
@@ -226,17 +236,17 @@ export const IVRPhoneSimulator: React.FC<IVRPhoneSimulatorProps> = ({
               <span aria-hidden="true">·</span>
               <span>2G/4G Feature Phone Gateway</span>
             </div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight mt-1">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mt-0.5">
               Field Telephony &amp; DTMF Diagnostic Simulator
             </h1>
-            <p className="text-xs text-slate-600 mt-1 max-w-3xl leading-relaxed">
+            <p className="text-xs text-slate-600 mt-0.5 max-w-3xl leading-relaxed">
               Provides survivors on basic ₹800 feature phones with guaranteed statutory outreach over automated
               multilingual voice IVR and two-way SMS. Requires no smartphones, internet connectivity, or apps.
             </p>
           </div>
 
           {/* Beneficiary Selector */}
-          <div className="flex items-center gap-2 bg-slate-50 p-2 rounded border border-slate-300 self-start md:self-auto">
+          <div className="flex items-center gap-2 bg-slate-50/90 p-2 rounded border border-slate-300 self-start md:self-auto shrink-0">
             <span className="text-xs text-slate-600 font-medium">Target Case:</span>
             <select
               value={activeCaseId}
@@ -255,9 +265,9 @@ export const IVRPhoneSimulator: React.FC<IVRPhoneSimulatorProps> = ({
             </select>
           </div>
         </div>
-      </div>
+      </LiquidGlassContainer>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: Industrial Field Handset Terminal */}
         <div className="lg:col-span-5 flex flex-col items-center">
           <div className="w-full max-w-[340px] bg-slate-900 rounded-3xl p-4 shadow-xl border border-slate-700 relative">
@@ -553,7 +563,7 @@ export const IVRPhoneSimulator: React.FC<IVRPhoneSimulatorProps> = ({
         {/* RIGHT COLUMN: Multilingual Inspector, SMS Testing & Live Audit Trail */}
         <div className="lg:col-span-7 space-y-6">
           {/* Telephony Control & Script Inspector */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5">
+          <LiquidGlassContainer borderRadius={12} className="p-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2 text-xs">
                 <span className="font-bold text-slate-900 uppercase tracking-wider">
@@ -770,10 +780,10 @@ export const IVRPhoneSimulator: React.FC<IVRPhoneSimulatorProps> = ({
                 </div>
               </div>
             )}
-          </div>
+          </LiquidGlassContainer>
 
           {/* Real-time Telephony Audit Trail & Call Transcript */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5">
+          <LiquidGlassContainer borderRadius={12} className="p-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-slate-700" />
@@ -788,7 +798,7 @@ export const IVRPhoneSimulator: React.FC<IVRPhoneSimulatorProps> = ({
 
             <div
               ref={logContainerRef}
-              className="mt-3 bg-slate-50 rounded p-3 h-48 overflow-y-auto space-y-1.5 font-mono text-xs border border-slate-200"
+              className="mt-3 bg-slate-50/80 rounded p-3 h-48 overflow-y-auto space-y-1.5 font-mono text-xs border border-slate-200"
             >
               {session.callLog.length === 0 ? (
                 <div className="text-slate-400 text-center py-12 text-xs">
@@ -819,7 +829,7 @@ export const IVRPhoneSimulator: React.FC<IVRPhoneSimulatorProps> = ({
                 ))
               )}
             </div>
-          </div>
+          </LiquidGlassContainer>
         </div>
       </div>
     </div>
